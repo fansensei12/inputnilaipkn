@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Input Nilai Siswa - Google Sheets Sync</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SheetJS for Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .custom-scrollbar::-webkit-scrollbar { height: 5px; width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] { -moz-appearance: textfield; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col antialiased">
+
+    <!-- HEADER NAVIGATION -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 shrink-0">
+                        <i data-lucide="calculator" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="font-bold text-slate-900 text-base sm:text-lg leading-tight">Input Nilai Siswa</h1>
+                            <span id="sync-status-badge" class="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Disk Mode
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 font-medium hidden sm:block">Sinkron ke Sheet "Input Nilai" & Fast Copy</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BUTTON ACTIONS -->
+            <div class="grid grid-cols-2 sm:flex items-center gap-2">
+                <button onclick="openCopyModal('all')" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    <span class="truncate">Copy Hasil Nilai</span>
+                </button>
+
+                <button onclick="openConfigModal()" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
+                    <i data-lucide="link-2" class="w-4 h-4"></i>
+                    <span class="truncate">Connect Sheet</span>
+                </button>
+
+                <button onclick="openAddColumnModal()" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span class="truncate">+ Judul Nilai</span>
+                </button>
+
+                <button onclick="openAddStudentModal()" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-700 hover:bg-slate-800 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    <span class="truncate">+ Siswa</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-5 space-y-3">
+
+        <!-- SEARCH & FILTER BAR -->
+        <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2 flex-1">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="search-input" placeholder="Cari nama, kelas, NIS..." 
+                        class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" id="clear-search-btn" onclick="clearSearchInput()" title="Hapus pencarian" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-0.5 rounded-full hover:bg-slate-200 transition-all">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <select id="filter-class" class="px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none shrink-0">
+                    <option value="NONE">-- Pilih Kelas --</option>
+                    <option value="ALL">Semua Kelas</option>
+                </select>
+            </div>
+
+            <div class="flex items-center justify-between sm:justify-end gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+                <span id="counter-info" class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-bold">0 Siswa</span>
+                <button onclick="fetchFromGoogleSheet()" title="Tarik data terbaru dari Sheet" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh Sheet
+                </button>
+                <button onclick="exportToExcel()" class="text-xs text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1 border border-emerald-200 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
+                </button>
+            </div>
+        </div>
+
+        <!-- LIST DAFTAR NILAI SISWA -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+            <!-- Header Ringkasan Judul Nilai & Rata-rata Kolom -->
+            <div class="bg-slate-50 px-3 sm:px-4 py-2.5 border-b border-slate-200 flex items-center justify-between gap-2 overflow-x-auto custom-scrollbar">
+                <span class="text-xs font-bold text-slate-500 uppercase shrink-0">Kolom Nilai & Rata-Rata:</span>
+                <div id="column-pills-container" class="flex items-center gap-1.5 shrink-0"></div>
+            </div>
+
+            <!-- List Berurutan Ke Bawah -->
+            <div id="student-vertical-list" class="divide-y divide-slate-100"></div>
+        </div>
+
+    </main>
+
+    <!-- MODAL COPY HASIL NILAI -->
+    <div id="copy-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="copy" class="w-4 h-4 text-emerald-600"></i>
+                    <span>Copy Hasil Nilai</span>
+                </h3>
+                <button onclick="closeCopyModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            
+            <div class="space-y-3">
+                <!-- Option 1: Format Mode -->
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Format Output</label>
+                    <div class="flex gap-2">
+                        <button onclick="switchCopyFormat('excel')" id="btn-format-excel" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-emerald-600 text-white border-emerald-600">
+                            Format Excel / Sheet
+                        </button>
+                        <button onclick="switchCopyFormat('wa')" id="btn-format-wa" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200">
+                            Format Teks / WA
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Option 2 & 3: Mode Isi & Filter Judul -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Isi Data yang Di-copy</label>
+                        <select id="copy-mode-select" onchange="updateCopySettings()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="full">Lengkap (Identitas + Nilai)</option>
+                            <option value="values_only">Hanya Nilai Angka Saja</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pilih Judul Nilai</label>
+                        <select id="copy-column-select" onchange="updateCopySettings()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="all">Semua Judul Nilai</option>
+                            <option value="avg">Rata-Rata Saja</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <textarea id="copy-preview-text" readonly rows="7" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none custom-scrollbar"></textarea>
+                    <p id="copy-hint-text" class="text-[11px] text-slate-400 mt-1">Tekan tombol di bawah untuk menyalin ke clipboard, lalu paste (Ctrl+V) langsung di Excel/WA.</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button onclick="closeCopyModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Tutup</button>
+                <button onclick="execCopyText()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5">
+                    <i data-lucide="clipboard" class="w-4 h-4"></i> Copy Sekarang
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONNECT GOOGLE SHEET -->
+    <div id="config-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="link" class="w-4 h-4 text-indigo-600"></i>
+                    <span>Hubungkan ke Google Sheets</span>
+                </h3>
+                <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">URL Web App Google Apps Script</label>
+                    <input type="url" id="script-url-input" placeholder="https://script.google.com/macros/s/.../exec" 
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-[10px] text-slate-400 mt-1">Masukkan URL Web App Apps Script yang terhubung ke tab "Input Nilai".</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button onclick="closeConfigModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                <button onclick="saveConfig()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan & Sync</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH / EDIT SISWA -->
+    <div id="student-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 id="student-modal-title" class="font-bold text-slate-900 text-sm">Tambah Siswa Baru</h3>
+                <button onclick="closeStudentModal()"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
+            </div>
+            <input type="hidden" id="edit-student-id">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Siswa *</label>
+                    <input type="text" id="student-name-input" placeholder="Ahmad Nuriel" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kelas</label>
+                        <input type="text" id="student-class-input" placeholder="Kelas 8D" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">NIS</label>
+                        <input type="text" id="student-nis-input" placeholder="14782..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeStudentModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                <button onclick="saveStudent()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH / EDIT JUDUL NILAI -->
+    <div id="column-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="column-modal-title" class="font-bold text-slate-900 text-sm">Tambah Judul Nilai</h3>
+                <button onclick="closeColumnModal()"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
+            </div>
+            <input type="hidden" id="edit-col-id">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Judul Kolom Nilai</label>
+                <input type="text" id="column-title-input" placeholder="Contoh: Tugas 1, UH 1, PTS..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeColumnModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                <button onclick="saveColumn()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
+
+    <script>
+        const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCTjH2MMiAH73ekDjrkQPv9hOVt-7nGIOsC6-dR-r8fj55Gcaen75iYmDcAx-NtS8JZw/exec';
+        let scriptUrl = localStorage.getItem('input_nilai_script_url') || DEFAULT_SCRIPT_URL;
+        
+        let hiddenColumns = new Set();
+        let copyFormat = 'excel';
+        let copyMode = 'full';
+        let copyColumnFilter = 'all';
+
+        let gradeColumns = JSON.parse(localStorage.getItem('input_nilai_columns')) || [
+            { id: 'col_1', title: 'Tugas 1' },
+            { id: 'col_2', title: 'UH 1' },
+            { id: 'col_3', title: 'PTS' }
+        ];
+
+        let students = JSON.parse(localStorage.getItem('input_nilai_students')) || [
+            { id: 'stu_1', kelas: 'Kelas 8D', nis: '14874 - 0126159015', nama: 'ABDULLAH ZAIN', grades: { col_1: '85', col_2: '90', col_3: '88' } },
+            { id: 'stu_2', kelas: 'Kelas 8D', nis: '14751 - 0125352689', nama: 'AERLANGGA FALAH PRATAMA', grades: { col_1: '78', col_2: '82', col_3: '80' } },
+            { id: 'stu_3', kelas: 'Kelas 8D', nis: '14782 - 0102606954', nama: 'AHMAD NURIEL', grades: { col_1: '92', col_2: '88', col_3: '95' } }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('search-input').addEventListener('input', () => {
+                toggleClearSearchBtn();
+                render();
+            });
+            document.getElementById('filter-class').addEventListener('change', render);
+
+            if (!localStorage.getItem('input_nilai_script_url')) {
+                localStorage.setItem('input_nilai_script_url', DEFAULT_SCRIPT_URL);
+            }
+
+            document.getElementById('script-url-input').value = scriptUrl;
+            updateBadge(true, "Cloud Sync Active");
+
+            fetchFromGoogleSheet();
+            populateClassDropdown();
+            render();
+            lucide.createIcons();
+        });
+
+        function saveLocal() {
+            localStorage.setItem('input_nilai_columns', JSON.stringify(gradeColumns));
+            localStorage.setItem('input_nilai_students', JSON.stringify(students));
+        }
+
+        function clearSearchInput() {
+            const input = document.getElementById('search-input');
+            input.value = '';
+            toggleClearSearchBtn();
+            render();
+            input.focus();
+        }
+
+        function toggleClearSearchBtn() {
+            const input = document.getElementById('search-input');
+            const btn = document.getElementById('clear-search-btn');
+            if (btn) {
+                if (input.value.trim().length > 0) btn.classList.remove('hidden');
+                else btn.classList.add('hidden');
+            }
+        }
+
+        function getFilteredStudents() {
+            const searchVal = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+            const classVal = document.getElementById('filter-class')?.value || 'NONE';
+
+            if (classVal === 'NONE') return [];
+
+            return students.filter(s => {
+                const matchSearch = (s.nama && s.nama.toLowerCase().includes(searchVal)) ||
+                                    (s.kelas && s.kelas.toLowerCase().includes(searchVal)) ||
+                                    (s.nis && s.nis.toLowerCase().includes(searchVal));
+                const matchClass = (classVal === 'ALL') || (s.kelas === classVal);
+                return matchSearch && matchClass;
+            });
+        }
+
+        function render() {
+            const classVal = document.getElementById('filter-class').value;
+            const filtered = getFilteredStudents();
+
+            document.getElementById('counter-info').innerText = `${filtered.length} Siswa`;
+
+            renderPills(filtered);
+            renderList(filtered, classVal);
+            lucide.createIcons();
+        }
+
+        function renderPills(filteredList) {
+            const container = document.getElementById('column-pills-container');
+            const pillsHtml = gradeColumns.map(col => {
+                const isHidden = hiddenColumns.has(col.id);
+                
+                let totalScore = 0;
+                let scoredCount = 0;
+                filteredList.forEach(s => {
+                    const val = parseFloat(s.grades ? s.grades[col.id] : null);
+                    if (!isNaN(val)) {
+                        totalScore += val;
+                        scoredCount++;
+                    }
+                });
+                const avg = scoredCount > 0 ? (totalScore / scoredCount).toFixed(1) : '-';
+
+                return `
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold ${isHidden ? 'opacity-40 bg-slate-100 text-slate-400' : 'text-slate-700'} shadow-2xs transition-all">
+                        <button type="button" onclick="toggleColumnVisibility('${col.id}')" title="${isHidden ? 'Tampilkan kolom ini' : 'Sembunyikan kolom ini'}" class="p-0.5 hover:text-indigo-600 focus:outline-none flex items-center shrink-0">
+                            <i data-lucide="${isHidden ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <span class="${isHidden ? 'line-through' : ''}">${escapeHtml(col.title)}</span>
+                        <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded-md text-[10px] font-bold" title="Rata-rata Nilai">
+                            RATA: ${avg}
+                        </span>
+                        <button onclick="openCopyModal('${col.id}')" title="Copy Nilai Kolom Ini Saja" class="p-0.5 text-emerald-600 hover:text-emerald-800 focus:outline-none">
+                            <i data-lucide="copy" class="w-3 h-3"></i>
+                        </button>
+                        <button onclick="openEditColumnModal('${col.id}')" title="Ubah Judul" class="p-0.5 text-slate-400 hover:text-slate-600">
+                            <i data-lucide="edit-2" class="w-3 h-3"></i>
+                        </button>
+                        <button onclick="deleteColumn('${col.id}')" title="Hapus Judul" class="p-0.5 text-slate-400 hover:text-red-600">
+                            <i data-lucide="trash-2" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            const avgPillHtml = `
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 border border-indigo-200 rounded-lg text-xs font-bold text-indigo-700 shadow-2xs transition-all">
+                    <span>Rata-Rata Siswa</span>
+                    <button onclick="openCopyModal('avg')" title="Copy Nilai Rata-Rata Saja" class="p-0.5 text-indigo-600 hover:text-indigo-800 focus:outline-none">
+                        <i data-lucide="copy" class="w-3 h-3"></i>
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = pillsHtml + avgPillHtml;
+        }
+
+        function renderList(filteredList, classVal) {
+            const list = document.getElementById('student-vertical-list');
+
+            if (classVal === 'NONE') {
+                list.innerHTML = `
+                    <div class="p-8 text-center text-slate-400">
+                        <i data-lucide="filter" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                        <p class="text-xs font-semibold text-slate-500">Silakan pilih kelas terlebih dahulu</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Pilih salah satu kelas di menu dropdown atas untuk menginputkan nilai siswa.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (filteredList.length === 0) {
+                list.innerHTML = `
+                    <div class="p-8 text-center text-slate-400">
+                        <p class="text-xs font-semibold text-slate-500">Tidak ada siswa yang cocok dengan pencarian.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const visibleColumns = gradeColumns.filter(col => !hiddenColumns.has(col.id));
+
+            list.innerHTML = filteredList.map((s, idx) => {
+                let totalScore = 0;
+                let countScore = 0;
+
+                const inputsHtml = visibleColumns.map((col, cIdx) => {
+                    const scoreVal = (s.grades && s.grades[col.id] !== undefined) ? s.grades[col.id] : '';
+                    if (scoreVal !== '') {
+                        const num = parseFloat(scoreVal);
+                        if (!isNaN(num)) { totalScore += num; countScore++; }
+                    }
+
+                    return `
+                        <div class="flex flex-col items-center gap-1 shrink-0">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase truncate max-w-[80px]">${escapeHtml(col.title)}</span>
+                            <input type="number" min="0" max="100" step="any" 
+                                value="${escapeHtml(scoreVal)}" 
+                                placeholder="0" 
+                                data-stu-idx="${idx}"
+                                data-col-idx="${cIdx}"
+                                onfocus="this.select()"
+                                onkeydown="handleGradeKeyDown(event, ${idx}, ${cIdx})"
+                                oninput="updateGrade('${s.id}', '${col.id}', this.value)"
+                                class="w-16 sm:w-20 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-center text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                        </div>
+                    `;
+                }).join('');
+
+                const avg = countScore > 0 ? (totalScore / countScore).toFixed(1) : '-';
+
+                return `
+                    <div class="p-3 sm:px-4 sm:py-3.5 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                            <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 font-bold text-xs flex items-center justify-center shrink-0">
+                                ${idx + 1}
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="font-bold text-slate-900 text-xs sm:text-sm leading-tight truncate">${escapeHtml(s.nama)}</h3>
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 shrink-0">
+                                        ${escapeHtml(s.kelas || 'Umum')}
+                                    </span>
+                                </div>
+                                ${s.nis ? `<p class="text-[10px] text-slate-400 mt-0.5">NIS: ${escapeHtml(s.nis)}</p>` : ''}
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button onclick="openEditStudentModal('${s.id}')" title="Edit Siswa" class="p-1 text-slate-400 hover:text-slate-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="deleteStudent('${s.id}')" title="Hapus Siswa" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 sm:pb-0 shrink-0">
+                            ${inputsHtml}
+                            <div class="flex flex-col items-center gap-1 shrink-0 pl-1 border-l border-slate-200">
+                                <span class="text-[10px] font-bold text-indigo-600 uppercase">RATA</span>
+                                <span id="avg-badge-${s.id}" class="w-16 sm:w-20 py-1.5 bg-indigo-50 border border-indigo-200 rounded-xl text-xs sm:text-sm font-extrabold text-center text-indigo-700">
+                                    ${avg}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function handleGradeKeyDown(e, studentIdx, colIdx) {
+            const key = e.key;
+            let targetStu = studentIdx;
+            let targetCol = colIdx;
+
+            if (key === 'Enter' || key === 'ArrowDown') {
+                e.preventDefault();
+                targetStu = studentIdx + 1;
+            } else if (key === 'ArrowUp') {
+                e.preventDefault();
+                targetStu = studentIdx - 1;
+            } else if (key === 'ArrowLeft') {
+                const input = e.target;
+                if (input.selectionStart === 0 && input.selectionEnd === 0) {
+                    e.preventDefault();
+                    targetCol = colIdx - 1;
+                }
+            } else if (key === 'ArrowRight') {
+                const input = e.target;
+                if (input.selectionStart === input.value.length && input.selectionEnd === input.value.length) {
+                    e.preventDefault();
+                    targetCol = colIdx + 1;
+                }
+            } else {
+                return;
+            }
+
+            const targetInput = document.querySelector(`input[data-stu-idx="${targetStu}"][data-col-idx="${targetCol}"]`);
+            if (targetInput) {
+                targetInput.focus();
+                targetInput.select();
+            }
+        }
+
+        async function updateGrade(studentId, colId, value) {
+            const student = students.find(s => s.id === studentId);
+            const col = gradeColumns.find(c => c.id === colId);
+            if (!student || !col) return;
+
+            if (!student.grades) student.grades = {};
+            student.grades[colId] = value;
+            saveLocal();
+            
+            // Live recalculate student average UI
+            let total = 0, count = 0;
+            gradeColumns.forEach(c => {
+                if (!hiddenColumns.has(c.id)) {
+                    const val = parseFloat(student.grades[c.id]);
+                    if (!isNaN(val)) { total += val; count++; }
+                }
+            });
+            const avgBadge = document.getElementById(`avg-badge-${studentId}`);
+            if (avgBadge) {
+                avgBadge.innerText = count > 0 ? (total / count).toFixed(1) : '-';
+            }
+
+            renderPills(getFilteredStudents());
+
+            if (scriptUrl) {
+                try {
+                    await fetch(scriptUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'updateGrade',
+                            studentId: student.id,
+                            nis: student.nis,
+                            nama: student.nama,
+                            columnTitle: col.title,
+                            gradeValue: value
+                        })
+                    });
+                } catch (e) {
+                    console.error("Sheet sync error:", e);
+                }
+            }
+        }
+
+        function toggleColumnVisibility(colId) {
+            if (hiddenColumns.has(colId)) hiddenColumns.delete(colId);
+            else hiddenColumns.add(colId);
+            render();
+        }
+
+        function openCopyModal(targetColId = 'all') {
+            copyColumnFilter = targetColId || 'all';
+            
+            const colSelect = document.getElementById('copy-column-select');
+            colSelect.innerHTML = '<option value="all">Semua Judul Nilai</option>' + 
+                '<option value="avg">Rata-Rata Saja</option>' + 
+                gradeColumns.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+            
+            colSelect.value = copyColumnFilter;
+            document.getElementById('copy-mode-select').value = copyMode;
+
+            updateCopySettings();
+            document.getElementById('copy-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeCopyModal() {
+            document.getElementById('copy-modal').classList.add('hidden');
+        }
+
+        function updateCopySettings() {
+            copyMode = document.getElementById('copy-mode-select').value;
+            copyColumnFilter = document.getElementById('copy-column-select').value;
+            
+            const hintText = document.getElementById('copy-hint-text');
+            if (copyMode === 'values_only') {
+                hintText.innerText = "💡 Mode 'Hanya Nilai': Menyalin angka nilai saja urut ke bawah, sangat pas langsung di-paste (Ctrl+V) ke tabel Excel yang sudah ada nama siswanya.";
+            } else {
+                hintText.innerText = "Tekan tombol di bawah untuk menyalin langsung ke clipboard, lalu paste (Ctrl+V) di Excel/WA.";
+            }
+
+            generateCopyText();
+        }
+
+        function switchCopyFormat(fmt) {
+            copyFormat = fmt;
+            const btnExcel = document.getElementById('btn-format-excel');
+            const btnWa = document.getElementById('btn-format-wa');
+            if (fmt === 'excel') {
+                btnExcel.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-emerald-600 text-white border-emerald-600';
+                btnWa.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200';
+            } else {
+                btnWa.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-emerald-600 text-white border-emerald-600';
+                btnExcel.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200';
+            }
+            generateCopyText();
+        }
+
+        function generateCopyText() {
+            const list = getFilteredStudents();
+            let visibleCols = gradeColumns.filter(c => !hiddenColumns.has(c.id));
+            
+            if (copyColumnFilter !== 'all' && copyColumnFilter !== 'avg') {
+                visibleCols = visibleCols.filter(c => c.id === copyColumnFilter);
+            }
+
+            const area = document.getElementById('copy-preview-text');
+
+            if (copyFormat === 'excel') {
+                if (copyMode === 'values_only') {
+                    let rows = [];
+                    list.forEach(s => {
+                        if (copyColumnFilter === 'avg') {
+                            let total = 0, count = 0;
+                            visibleCols.forEach(c => {
+                                const val = (s.grades && s.grades[c.id] !== undefined) ? s.grades[c.id] : '';
+                                if (val !== '') {
+                                    const num = parseFloat(val);
+                                    if (!isNaN(num)) { total += num; count++; }
+                                }
+                            });
+                            const avg = count > 0 ? (total / count).toFixed(1) : '';
+                            rows.push(avg);
+                        } else {
+                            let r = [];
+                            visibleCols.forEach(c => {
+                                const val = (s.grades && s.grades[c.id] !== undefined) ? s.grades[c.id] : '';
+                                r.push(val);
+                            });
+                            rows.push(r.join('\t'));
+                        }
+                    });
+                    area.value = rows.join('\n');
+                } else {
+                    let header = ['No', 'Kelas', 'NIS', 'Nama Siswa'];
+                    if (copyColumnFilter === 'avg') {
+                        header.push('Rata-Rata');
+                    } else {
+                        visibleCols.forEach(c => header.push(c.title));
+                        if (copyColumnFilter === 'all') header.push('Rata-Rata');
+                    }
+
+                    let rows = [header.join('\t')];
+                    list.forEach((s, idx) => {
+                        let r = [idx + 1, s.kelas || '', s.nis || '', s.nama || ''];
+                        let total = 0, count = 0;
+
+                        if (copyColumnFilter === 'avg') {
+                            visibleCols.forEach(c => {
+                                const val = (s.grades && s.grades[c.id] !== undefined) ? s.grades[c.id] : '';
+                                if (val !== '') {
+                                    const num = parseFloat(val);
+                                    if (!isNaN(num)) { total += num; count++; }
+                                }
+                            });
+                            const avg = count > 0 ? (total / count).toFixed(1) : '';
+                            r.push(avg);
+                        } else {
+                            visibleCols.forEach(c => {
+                                const val = (s.grades && s.grades[c.id] !== undefined) ? s.grades[c.id] : '';
+                                r.push(val);
+                                if (val !== '') { total += parseFloat(val); count++; }
+                            });
+                            if (copyColumnFilter === 'all') {
+                                const avg = count > 0 ? (total / count).toFixed(1) : '';
+                                r.push(avg);
+                            }
+                        }
+                        rows.push(r.join('\t'));
+                    });
+                    area.value = rows.join('\n');
+                }
+            } else {
+                let lines = ['REKAP NILAI SISWA', '===================='];
+                if (copyColumnFilter === 'avg') {
+                    lines.push('JUDUL: Rata-Rata Nilai');
+                    lines.push('--------------------');
+                } else if (copyColumnFilter !== 'all') {
+                    const selectedCol = gradeColumns.find(c => c.id === copyColumnFilter);
+                    lines.push(`JUDUL: ${selectedCol ? selectedCol.title : ''}`);
+                    lines.push('--------------------');
+                }
+
+                if (copyMode === 'values_only') {
+                    list.forEach(s => {
+                        if (copyColumnFilter === 'avg') {
+                            let total = 0, count = 0;
+                            visibleCols.forEach(c => {
+                                const val = (s.grades && s.grades[c.id] !== undefined) ? s.grades[c.id] : '';
+                                if (val !== '') {
+                                    const num = parseFloat(val);
+                                    if (!isNaN(num)) { total += num; count++; }
+                                }
+                            });
+                            const avg = count > 0 ? (total / count).toFixed(1) : '-';
+                            lines.push(avg);
+                        } else {
+                            let scoresStr = visibleCols.map(c => (s.grades && s.grades[c.id] !== undefined) ? s.grades[c.id] : '-').join(' | ');
+                            lines.push(scoresStr);
+                        }
+                    });
+                } else {
+                    list.forEach((s, idx) => {
+                        let total = 0, count = 0;
+                        visibleCols.forEach(c => {
+                            const val = (s.grades && s.grades[c.id] !== undefined) ? s.grades[c.id] : '';
+                            if (val !== '') {
+                                const num = parseFloat(val);
+                                if (!isNaN(num)) { total += num; count++; }
+                            }
+                        });
+                        const avg = count > 0 ? (total / count).toFixed(1) : '-';
+
+                        if (copyColumnFilter === 'avg') {
+                            lines.push(`${idx + 1}. ${s.nama} (${s.kelas || ''}) => Rata-Rata: ${avg}`);
+                        } else {
+                            let scoresStr = visibleCols.map(c => {
+                                const val = (s.grades && s.grades[c.id] !== undefined) ? s.grades[c.id] : '-';
+                                return visibleCols.length === 1 ? val : `${c.title}: ${val}`;
+                            }).join(' | ');
+
+                            if (visibleCols.length === 1) {
+                                lines.push(`${idx + 1}. ${s.nama} (${s.kelas || ''}) => Nilai: ${scoresStr}`);
+                            } else {
+                                lines.push(`${idx + 1}. ${s.nama} (${s.kelas || ''})`);
+                                lines.push(`   ${scoresStr} => Rata: ${avg}`);
+                            }
+                        }
+                    });
+                }
+                area.value = lines.join('\n');
+            }
+        }
+
+        function execCopyText() {
+            const area = document.getElementById('copy-preview-text');
+            if (!area.value.trim()) {
+                showToast("Tidak ada data untuk di-copy", "error");
+                return;
+            }
+
+            area.select();
+            area.setSelectionRange(0, 99999);
+
+            try {
+                document.execCommand('copy');
+                showToast("Berhasil di-copy ke clipboard!", "success");
+            } catch (err) {
+                navigator.clipboard.writeText(area.value).then(() => {
+                    showToast("Berhasil di-copy ke clipboard!", "success");
+                }).catch(() => {
+                    showToast("Gagal menyalin data", "error");
+                });
+            }
+        }
+
+        function openConfigModal() { document.getElementById('config-modal').classList.remove('hidden'); }
+        function closeConfigModal() { document.getElementById('config-modal').classList.add('hidden'); }
+
+        async function saveConfig() {
+            scriptUrl = document.getElementById('script-url-input').value.trim() || DEFAULT_SCRIPT_URL;
+            localStorage.setItem('input_nilai_script_url', scriptUrl);
+            closeConfigModal();
+            if (scriptUrl) {
+                updateBadge(true, "Cloud Sync Active");
+                await fetchFromGoogleSheet();
+            } else {
+                updateBadge(false, "Disk Mode");
+            }
+        }
+
+        async function fetchFromGoogleSheet() {
+            if (!scriptUrl) return;
+            try {
+                showToast("Mengambil data dari Sheet...", "info");
+                const res = await fetch(scriptUrl);
+                const data = await res.json();
+                if (data && data.students && data.students.length > 0) {
+                    if (data.columns && data.columns.length > 0) gradeColumns = data.columns;
+                    students = data.students;
+                    saveLocal();
+                    populateClassDropdown();
+                    render();
+                    showToast("Data Sheet berhasil dimuat!", "success");
+                }
+            } catch (err) {
+                console.warn("Fetch from sheet failed, using local fallback", err);
+            }
+        }
+
+        async function syncAllToSheet() {
+            if (!scriptUrl) return;
+            try {
+                await fetch(scriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'syncAll', columns: gradeColumns, students })
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function populateClassDropdown() {
+            const select = document.getElementById('filter-class');
+            const selectedVal = select.value || 'NONE';
+            const classesSet = new Set(students.map(s => s.kelas).filter(Boolean));
+            select.innerHTML = '<option value="NONE">-- Pilih Kelas --</option><option value="ALL">Semua Kelas</option>' + 
+                Array.from(classesSet).sort().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            select.value = selectedVal;
+        }
+
+        function openAddStudentModal() {
+            document.getElementById('student-modal-title').innerText = "Tambah Siswa Baru";
+            document.getElementById('edit-student-id').value = "";
+            document.getElementById('student-name-input').value = "";
+            document.getElementById('student-class-input').value = "Kelas 8D";
+            document.getElementById('student-nis-input').value = "";
+            document.getElementById('student-modal').classList.remove('hidden');
+        }
+
+        function openEditStudentModal(id) {
+            const student = students.find(s => s.id === id);
+            if (!student) return;
+
+            document.getElementById('student-modal-title').innerText = "Edit Data Siswa";
+            document.getElementById('edit-student-id').value = student.id;
+            document.getElementById('student-name-input').value = student.nama || '';
+            document.getElementById('student-class-input').value = student.kelas || '';
+            document.getElementById('student-nis-input').value = student.nis || '';
+            document.getElementById('student-modal').classList.remove('hidden');
+        }
+
+        function closeStudentModal() {
+            document.getElementById('student-modal').classList.add('hidden');
+        }
+
+        function saveStudent() {
+            const id = document.getElementById('edit-student-id').value;
+            const nama = document.getElementById('student-name-input').value.trim();
+            const kelas = document.getElementById('student-class-input').value.trim() || 'Kelas 8D';
+            const nis = document.getElementById('student-nis-input').value.trim();
+
+            if (!nama) {
+                showToast("Nama siswa wajib diisi", "error");
+                return;
+            }
+
+            if (id) {
+                const s = students.find(item => item.id === id);
+                if (s) { s.nama = nama; s.kelas = kelas; s.nis = nis; }
+            } else {
+                students.unshift({ id: 'stu_' + Date.now(), nama, kelas, nis, grades: {} });
+            }
+
+            saveLocal();
+            populateClassDropdown();
+            render();
+            closeStudentModal();
+            syncAllToSheet();
+            showToast("Data siswa berhasil disimpan!", "success");
+        }
+
+        function deleteStudent(id) {
+            students = students.filter(s => s.id !== id);
+            saveLocal();
+            populateClassDropdown();
+            render();
+            syncAllToSheet();
+            showToast("Siswa berhasil dihapus", "success");
+        }
+
+        function openAddColumnModal() {
+            document.getElementById('column-modal-title').innerText = "Tambah Judul Nilai";
+            document.getElementById('edit-col-id').value = "";
+            document.getElementById('column-title-input').value = "";
+            document.getElementById('column-modal').classList.remove('hidden');
+        }
+
+        function openEditColumnModal(id) {
+            const col = gradeColumns.find(c => c.id === id);
+            if (!col) return;
+
+            document.getElementById('column-modal-title').innerText = "Edit Judul Nilai";
+            document.getElementById('edit-col-id').value = col.id;
+            document.getElementById('column-title-input').value = col.title;
+            document.getElementById('column-modal').classList.remove('hidden');
+        }
+
+        function closeColumnModal() {
+            document.getElementById('column-modal').classList.add('hidden');
+        }
+
+        function saveColumn() {
+            const id = document.getElementById('edit-col-id').value;
+            const title = document.getElementById('column-title-input').value.trim();
+
+            if (!title) {
+                showToast("Judul kolom wajib diisi", "error");
+                return;
+            }
+
+            if (id) {
+                const col = gradeColumns.find(c => c.id === id);
+                if (col) col.title = title;
+            } else {
+                gradeColumns.push({ id: 'col_' + Date.now(), title });
+            }
+
+            saveLocal();
+            render();
+            closeColumnModal();
+            syncAllToSheet();
+            showToast("Judul nilai berhasil disimpan!", "success");
+        }
+
+        function deleteColumn(id) {
+            gradeColumns = gradeColumns.filter(c => c.id !== id);
+            hiddenColumns.delete(id);
+            saveLocal();
+            render();
+            syncAllToSheet();
+            showToast("Judul nilai berhasil dihapus", "success");
+        }
+
+        function exportToExcel() {
+            const list = students;
+            const exportData = list.map((s, idx) => {
+                let total = 0, count = 0;
+                const row = {
+                    "No": idx + 1,
+                    "Kelas": s.kelas || "",
+                    "NIS": s.nis || "",
+                    "Nama Siswa": s.nama || ""
+                };
+
+                gradeColumns.forEach(col => {
+                    const val = (s.grades && s.grades[col.id] !== undefined) ? s.grades[col.id] : "";
+                    row[col.title] = val;
+                    if (val !== "") {
+                        const num = parseFloat(val);
+                        if (!isNaN(num)) { total += num; count++; }
+                    }
+                });
+
+                row["Rata-Rata"] = count > 0 ? (total / count).toFixed(1) : "";
+                return row;
+            });
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai");
+            XLSX.writeFile(wb, `Rekap_Nilai_Siswa_${new Date().toISOString().slice(0,10)}.xlsx`);
+            showToast("File Excel berhasil diunduh!", "success");
+        }
+
+        function updateBadge(isOnline, text) {
+            const badge = document.getElementById('sync-status-badge');
+            badge.className = isOnline ? 
+                "inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200" :
+                "inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200";
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span> ${text}`;
+        }
+
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `p-3 rounded-xl shadow-lg text-xs font-semibold text-white transition-all transform duration-300 translate-y-2 opacity-0 ${type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800'}`;
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 2500);
+        }
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
