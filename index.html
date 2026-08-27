@@ -286,6 +286,26 @@
         let copyMode = 'full';
         let copyColumnFilter = 'all';
         let pendingConfirmAction = null;
+
+        let gradeColumns = JSON.parse(localStorage.getItem('input_nilai_columns')) || [
+            { id: 'col_1', title: 'Tugas 1' },
+            { id: 'col_2', title: 'UH 1' },
+            { id: 'col_3', title: 'PTS' }
+        ];
+
+        let students = JSON.parse(localStorage.getItem('input_nilai_students')) || [
+            { id: 'stu_1', kelas: 'Kelas 8D', nis: '14874 - 0126159015', nama: 'ABDULLAH ZAIN', grades: { col_1: '85', col_2: '90', col_3: '88' } },
+            { id: 'stu_2', kelas: 'Kelas 8D', nis: '14751 - 0125352689', nama: 'AERLANGGA FALAH PRATAMA', grades: { col_1: '78', col_2: '82', col_3: '80' } },
+            { id: 'stu_3', kelas: 'Kelas 8D', nis: '14782 - 0102606954', nama: 'AHMAD NURIEL', grades: { col_1: '92', col_2: '88', col_3: '95' } }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('search-input').addEventListener('input', () => {
+                toggleClearSearchBtn();
+                render();
+            });
+            document.getElementById('filter-class').addEventListener('change', render);
+
             if (!localStorage.getItem('input_nilai_script_url')) {
                 localStorage.setItem('input_nilai_script_url', DEFAULT_SCRIPT_URL);
             }
