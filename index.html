@@ -50,25 +50,15 @@
             </div>
 
             <!-- BUTTON ACTIONS -->
-            <div class="grid grid-cols-2 sm:flex items-center gap-2">
-                <button onclick="openCopyModal('all')" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
+            <div class="flex items-center gap-2">
+                <button onclick="openCopyModal('all')" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
                     <i data-lucide="copy" class="w-4 h-4"></i>
                     <span class="truncate">Copy Hasil Nilai</span>
                 </button>
 
-                <button onclick="openConfigModal()" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
-                    <i data-lucide="link-2" class="w-4 h-4"></i>
-                    <span class="truncate">Connect Sheet</span>
-                </button>
-
-                <button onclick="openAddColumnModal()" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                    <span class="truncate">+ Judul Nilai</span>
-                </button>
-
-                <button onclick="openAddStudentModal()" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-700 hover:bg-slate-800 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
-                    <i data-lucide="user-plus" class="w-4 h-4"></i>
-                    <span class="truncate">+ Siswa</span>
+                <button onclick="toggleSidebar(true)" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
+                    <i data-lucide="menu" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Menu</span>
                 </button>
             </div>
         </div>
@@ -98,9 +88,6 @@
                 <span id="counter-info" class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-bold">0 Siswa</span>
                 <button onclick="fetchFromGoogleSheet()" title="Tarik data terbaru dari Sheet" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
                     <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh Sheet
-                </button>
-                <button onclick="exportToExcel()" class="text-xs text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1 border border-emerald-200 bg-emerald-50 px-2.5 py-1 rounded-lg">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
                 </button>
             </div>
         </div>
@@ -277,11 +264,73 @@
     <!-- TOAST CONTAINER -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
 
+    <!-- SIDEBAR DRAWER (HIDE / UNHIDE MENU) -->
+    <div id="sidebar-drawer" class="fixed inset-0 z-50 pointer-events-none">
+        <!-- Backdrop Overlay -->
+        <div id="sidebar-backdrop" onclick="toggleSidebar(false)" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+        
+        <!-- Drawer Panel -->
+        <div id="sidebar-panel" class="absolute top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl border-r border-slate-200 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between p-5 pointer-events-auto">
+            <div class="space-y-6">
+                <!-- Sidebar Header -->
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                            <i data-lucide="sliders" class="w-4 h-4"></i>
+                        </div>
+                        <h2 class="font-bold text-slate-900 text-sm">Menu & Kelola</h2>
+                    </div>
+                    <button onclick="toggleSidebar(false)" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Menu Item Groups -->
+                <div class="space-y-4">
+                    <div>
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Kelola Data Nilai</span>
+                        <div class="space-y-2">
+                            <button onclick="openAddColumnModal(); toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
+                                <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600 shrink-0"></i>
+                                <span>+ Tambah Judul Nilai</span>
+                            </button>
+                            <button onclick="openAddStudentModal(); toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
+                                <i data-lucide="user-plus" class="w-4 h-4 text-indigo-600 shrink-0"></i>
+                                <span>+ Tambah Siswa</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Integrasi & File</span>
+                        <div class="space-y-2">
+                            <button onclick="openConfigModal(); toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
+                                <i data-lucide="link-2" class="w-4 h-4 text-indigo-600 shrink-0"></i>
+                                <span>Connect Google Sheet</span>
+                            </button>
+                            <button onclick="exportToExcel(); toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
+                                <i data-lucide="download" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                <span>Export ke Excel (.xlsx)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Info -->
+            <div class="pt-4 border-t border-slate-100 text-center">
+                <p class="text-[11px] text-slate-400">Aplikasi Input Nilai Siswa v2.0</p>
+                <p class="text-[10px] text-slate-300 mt-0.5">Disinkronkan ke Google Sheets</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCTjH2MMiAH73ekDjrkQPv9hOVt-7nGIOsC6-dR-r8fj55Gcaen75iYmDcAx-NtS8JZw/exec';
         let scriptUrl = localStorage.getItem('input_nilai_script_url') || DEFAULT_SCRIPT_URL;
         
-        let hiddenColumns = new Set();
+        // Load hidden columns by Title from localStorage so visibility preferences persist across sessions & Google Sheet syncs
+        let hiddenColumns = new Set(JSON.parse(localStorage.getItem('input_nilai_hidden_columns') || '[]'));
         let copyFormat = 'excel';
         let copyMode = 'full';
         let copyColumnFilter = 'all';
@@ -318,6 +367,34 @@
             render();
             lucide.createIcons();
         });
+
+        function toggleSidebar(show) {
+            const drawer = document.getElementById('sidebar-drawer');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const panel = document.getElementById('sidebar-panel');
+            if (!drawer || !backdrop || !panel) return;
+            
+            const isVisible = drawer.classList.contains('active');
+            const shouldShow = show !== undefined ? show : !isVisible;
+
+            if (shouldShow) {
+                drawer.classList.add('active');
+                drawer.classList.remove('pointer-events-none');
+                backdrop.classList.add('opacity-100', 'pointer-events-auto');
+                backdrop.classList.remove('opacity-0', 'pointer-events-none');
+                panel.classList.remove('-translate-x-full');
+            } else {
+                drawer.classList.remove('active');
+                backdrop.classList.add('opacity-0', 'pointer-events-none');
+                backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+                panel.classList.add('-translate-x-full');
+                setTimeout(() => {
+                    if (!drawer.classList.contains('active')) {
+                        drawer.classList.add('pointer-events-none');
+                    }
+                }, 300);
+            }
+        }
 
         function saveLocal() {
             localStorage.setItem('input_nilai_columns', JSON.stringify(gradeColumns));
@@ -370,7 +447,7 @@
         function renderPills(filteredList) {
             const container = document.getElementById('column-pills-container');
             const pillsHtml = gradeColumns.map(col => {
-                const isHidden = hiddenColumns.has(col.id);
+                const isHidden = hiddenColumns.has(col.title);
                 
                 let totalScore = 0;
                 let scoredCount = 0;
@@ -383,9 +460,10 @@
                 });
                 const avg = scoredCount > 0 ? (totalScore / scoredCount).toFixed(1) : '-';
 
+                const safeTitle = col.title.replace(/'/g, "\\'");
                 return `
                     <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold ${isHidden ? 'opacity-40 bg-slate-100 text-slate-400' : 'text-slate-700'} shadow-2xs transition-all">
-                        <button type="button" onclick="toggleColumnVisibility('${col.id}')" title="${isHidden ? 'Tampilkan kolom ini' : 'Sembunyikan kolom ini'}" class="p-0.5 hover:text-indigo-600 focus:outline-none flex items-center shrink-0">
+                        <button type="button" onclick="toggleColumnVisibility('${safeTitle}')" title="${isHidden ? 'Tampilkan kolom ini' : 'Sembunyikan kolom ini'}" class="p-0.5 hover:text-indigo-600 focus:outline-none flex items-center shrink-0">
                             <i data-lucide="${isHidden ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i>
                         </button>
                         <span class="${isHidden ? 'line-through' : ''}">${escapeHtml(col.title)}</span>
@@ -443,7 +521,7 @@
                 return;
             }
 
-            const visibleColumns = gradeColumns.filter(col => !hiddenColumns.has(col.id));
+            const visibleColumns = gradeColumns.filter(col => !hiddenColumns.has(col.title));
 
             list.innerHTML = filteredList.map((s, idx) => {
                 let totalScore = 0;
@@ -555,7 +633,7 @@
             // Live recalculate student average UI
             let total = 0, count = 0;
             gradeColumns.forEach(c => {
-                if (!hiddenColumns.has(c.id)) {
+                if (!hiddenColumns.has(c.title)) {
                     const val = parseFloat(student.grades[c.id]);
                     if (!isNaN(val)) { total += val; count++; }
                 }
@@ -588,9 +666,11 @@
             }
         }
 
-        function toggleColumnVisibility(colId) {
-            if (hiddenColumns.has(colId)) hiddenColumns.delete(colId);
-            else hiddenColumns.add(colId);
+        function toggleColumnVisibility(colTitle) {
+            if (hiddenColumns.has(colTitle)) hiddenColumns.delete(colTitle);
+            else hiddenColumns.add(colTitle);
+            // Save updated visibility preference to localStorage by Column Title
+            localStorage.setItem('input_nilai_hidden_columns', JSON.stringify(Array.from(hiddenColumns)));
             render();
         }
 
@@ -644,7 +724,7 @@
 
         function generateCopyText() {
             const list = getFilteredStudents();
-            let visibleCols = gradeColumns.filter(c => !hiddenColumns.has(c.id));
+            let visibleCols = gradeColumns.filter(c => !hiddenColumns.has(c.title));
             
             if (copyColumnFilter !== 'all' && copyColumnFilter !== 'avg') {
                 visibleCols = visibleCols.filter(c => c.id === copyColumnFilter);
@@ -1019,8 +1099,9 @@
                 "Hapus Judul Nilai",
                 `Apakah Anda yakin ingin menghapus kolom "${colTitle}"? Seluruh nilai di kolom ini akan hilang permanen.`,
                 () => {
+                    if (col) hiddenColumns.delete(col.title);
                     gradeColumns = gradeColumns.filter(c => c.id !== id);
-                    hiddenColumns.delete(id);
+                    localStorage.setItem('input_nilai_hidden_columns', JSON.stringify(Array.from(hiddenColumns)));
                     saveLocal();
                     render();
                     syncAllToSheet();
