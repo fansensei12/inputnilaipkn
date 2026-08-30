@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Input Nilai Siswa - Google Sheets Sync</title>
-    
+    <title>Aplikasi Kelas - Penanda & Input Nilai Siswa</title>
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons CDN -->
@@ -18,15 +18,863 @@
         .custom-scrollbar::-webkit-scrollbar { height: 5px; width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+        .touch-btn { user-select: none; -webkit-user-select: none; }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
         input[type=number] { -moz-appearance: textfield; }
+        .app-view { display: none; }
+        .app-view.active { display: flex; }
+        .home-fab {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 60;
+        }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col antialiased">
+<body class="bg-slate-100 min-h-screen text-slate-800 antialiased">
+
+    <!-- =========================================================
+         SCRIPT NAVIGASI & URL BERSAMA (harus dimuat paling awal,
+         karena dipakai oleh modul Penanda & Input Nilai di bawah)
+    ========================================================== -->
+    <script>
+        // URL Web App Google Apps Script TUNGGAL, dipakai bersama oleh kedua modul.
+        // Ganti nilai di bawah ini dengan URL hasil deploy Code.gs (lihat panduan di chat).
+        const SHARED_DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwqn0bmTXf6UFV4Y17iKKqlgkXBte47-blCqklSefE11UpBwf5GBhTAgAYNBlr4v6LbGA/exec';
+
+        function getSharedScriptUrl() {
+            try {
+                return localStorage.getItem('app_script_url') || SHARED_DEFAULT_SCRIPT_URL;
+            } catch (e) {
+                return SHARED_DEFAULT_SCRIPT_URL;
+            }
+        }
+
+        function setSharedScriptUrl(url) {
+            try { localStorage.setItem('app_script_url', url); } catch (e) {}
+        }
+
+        function showView(name) {
+            document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
+            if (name === 'penanda') {
+                document.getElementById('view-penanda').classList.add('active');
+            } else if (name === 'nilai') {
+                document.getElementById('view-nilai').classList.add('active');
+            } else {
+                document.getElementById('view-landing').classList.add('active');
+            }
+            window.scrollTo(0, 0);
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function openSharedConfigModal() {
+            document.getElementById('shared-script-url-input').value = getSharedScriptUrl();
+            document.getElementById('shared-config-modal').classList.remove('hidden');
+        }
+        function closeSharedConfigModal() {
+            document.getElementById('shared-config-modal').classList.add('hidden');
+        }
+        async function saveSharedConfig() {
+            const url = document.getElementById('shared-script-url-input').value.trim() || SHARED_DEFAULT_SCRIPT_URL;
+            setSharedScriptUrl(url);
+            pn_scriptUrl = url;
+            nl_scriptUrl = url;
+            const pnInput = document.getElementById('pn-script-url-input');
+            const nlInput = document.getElementById('nl-script-url-input');
+            if (pnInput) pnInput.value = url;
+            if (nlInput) nlInput.value = url;
+            closeSharedConfigModal();
+            await pn_fetchFromGoogleSheet();
+            await nl_fetchFromGoogleSheet();
+        }
+    </script>
+
+    <!-- =========================================================
+         HALAMAN UTAMA / LANDING - PILIH MODUL
+    ========================================================== -->
+    <div id="view-landing" class="app-view active min-h-screen w-full flex-col items-center justify-center p-5">
+        <div class="max-w-md w-full mx-auto text-center space-y-8 py-10">
+            <div class="space-y-2">
+                <div class="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg shadow-slate-300 mx-auto">
+                    <i data-lucide="graduation-cap" class="w-8 h-8"></i>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-3">Aplikasi Data Siswa</h1>
+                <p class="text-sm text-slate-500 font-medium">Pilih modul yang ingin Anda buka. Kedua modul tersinkron ke satu Google Spreadsheet yang sama.</p>
+            </div>
+
+            <div class="space-y-4">
+                <button onclick="showView('penanda')" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-emerald-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-emerald-300 shadow-xs transition-all text-left group">
+                    <div class="w-12 h-12 shrink-0 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-200 group-hover:scale-105 transition-transform">
+                        <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">Penanda Siswa</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Centang kehadiran, tugas, atau catatan siswa harian</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0"></i>
+                </button>
+
+                <button onclick="showView('nilai')" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-indigo-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-indigo-300 shadow-xs transition-all text-left group">
+                    <div class="w-12 h-12 shrink-0 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform">
+                        <i data-lucide="calculator" class="w-6 h-6"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">Input Nilai</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Input dan hitung rata-rata nilai tugas/ujian siswa</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0"></i>
+                </button>
+            </div>
+
+            <button onclick="openSharedConfigModal()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-600">
+                <i data-lucide="link-2" class="w-3.5 h-3.5"></i> Atur URL Google Apps Script
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL KONEKSI BERSAMA (dari halaman utama) -->
+    <div id="shared-config-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-[70] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="link" class="w-4 h-4 text-slate-700"></i>
+                    <span>Hubungkan ke Google Sheets</span>
+                </h3>
+                <button onclick="closeSharedConfigModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">URL Web App Google Apps Script</label>
+                <input type="url" id="shared-script-url-input" placeholder="https://script.google.com/macros/s/.../exec"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-slate-500">
+                <p class="text-[10px] text-slate-400 mt-1">Satu URL ini dipakai bersama oleh modul Penanda Siswa dan Input Nilai, karena keduanya membaca/menulis ke 1 Spreadsheet yang sama (tab "Penanda" dan tab "Input Nilai").</p>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button onclick="closeSharedConfigModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                <button onclick="saveSharedConfig()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs">Simpan & Sync</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MODUL: PENANDA SISWA
+    ========================================================== -->
+    <div id="view-penanda" class="app-view min-h-screen w-full flex-col text-slate-800 relative">
+        <button onclick="showView('landing')" title="Kembali ke Menu Utama" class="home-fab p-2 rounded-xl bg-white/90 backdrop-blur border border-slate-200 shadow-md hover:bg-slate-100 active:scale-95 text-slate-700 transition-all flex items-center justify-center">
+            <i data-lucide="home" class="w-4 h-4"></i>
+        </button>
+
+
+    <!-- SIDEBAR BACKDROP OVERLAY -->
+    <div id="pn-sidebar-overlay" onclick="pn_closeSidebar()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 hidden transition-opacity duration-300 opacity-0"></div>
+
+    <!-- SIDEBAR NAVIGATION DRAWER -->
+    <aside id="pn-sidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between border-r border-slate-200">
+        <div class="p-5 space-y-6 overflow-y-auto custom-scrollbar">
+            
+            <!-- Sidebar Header -->
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-200 shrink-0">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-900 text-sm leading-tight">Menu Navigasi</h2>
+                        <p class="text-[10px] text-slate-400 font-medium">Aksi & Pengaturan</p>
+                    </div>
+                </div>
+                <button onclick="pn_closeSidebar()" title="Tutup Sidebar" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Sidebar Action Buttons -->
+            <div class="space-y-2.5">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-1">Menu Aksi Utama</span>
+
+                <button onclick="pn_openConfigModal(); pn_closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100/80 active:scale-98 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200 transition-all text-left group">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                        <i data-lucide="link-2" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <span class="block truncate">Connect Sheet</span>
+                        <span class="block text-[10px] text-emerald-600/80 font-normal truncate">Atur URL Google Apps Script</span>
+                    </div>
+                </button>
+
+                <button onclick="pn_openAddStudentModal(); pn_closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100/80 active:scale-98 text-indigo-800 text-xs font-bold rounded-xl border border-indigo-200 transition-all text-left group">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <span class="block truncate">+ Tambah Siswa</span>
+                        <span class="block text-[10px] text-indigo-600/80 font-normal truncate">Siswa baru ke daftar</span>
+                    </div>
+                </button>
+
+                <button onclick="pn_openAddColumnModal(); pn_closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 active:scale-98 text-slate-800 text-xs font-bold rounded-xl border border-slate-200 transition-all text-left group">
+                    <div class="w-7 h-7 rounded-lg bg-slate-800 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <span class="block truncate">+ Tambah Kolom</span>
+                        <span class="block text-[10px] text-slate-500 font-normal truncate">Jenis centang baru</span>
+                    </div>
+                </button>
+
+                <button onclick="pn_exportToExcel(); pn_closeSidebar();" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 active:scale-98 text-slate-800 text-xs font-bold rounded-xl border border-slate-200 transition-all text-left group">
+                    <div class="w-7 h-7 rounded-lg bg-slate-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <span class="block truncate">Export Excel</span>
+                        <span class="block text-[10px] text-slate-500 font-normal truncate">Unduh file .xlsx</span>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Quick Sync Box in Sidebar -->
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Sinkronisasi</span>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-600 font-medium">Google Sheets</span>
+                    <button onclick="pn_fetchFromGoogleSheet(); pn_closeSidebar();" title="Refresh dari Sheet" class="p-1.5 bg-white border border-slate-200 rounded-lg text-indigo-600 hover:text-indigo-800 shadow-2xs">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-slate-100 bg-slate-50/50">
+            <p class="text-[10px] text-slate-400 text-center font-medium">Penanda Siswa &copy; 2026</p>
+        </div>
+    </aside>
+
+    <!-- HEADER NAVIGATION -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex items-center justify-between gap-3">
+            
+            <div class="flex items-center gap-3">
+                <!-- Sidebar Toggle Button -->
+                <button onclick="pn_toggleSidebar()" title="Buka Menu Sidebar" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 transition-all flex items-center justify-center">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-200 shrink-0">
+                        <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="font-bold text-slate-900 text-base sm:text-lg leading-tight">Penanda Siswa</h1>
+                            <span id="pn-sync-status-badge" class="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Disk Mode
+                            </span>
+                        </div>
+                        <p id="pn-sub-status-text" class="text-[11px] text-slate-500 font-medium hidden sm:block">Sinkron ke Sheet "Penanda"</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header Quick Action Shortcut -->
+            <div class="flex items-center gap-2">
+                <button onclick="pn_toggleSidebar()" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[38px]">
+                    <i data-lucide="panel-left" class="w-4 h-4"></i>
+                    <span>Menu Sidebar</span>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-5 space-y-3">
+
+        <!-- SEARCH & FILTER BAR -->
+        <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2 flex-1">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="pn-search-input" placeholder="Cari nama, kelas, NIS..." 
+                        class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="button" id="pn-clear-search-btn" onclick="pn_clearSearchInput()" title="Hapus pencarian" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-0.5 rounded-full hover:bg-slate-200 transition-all">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <select id="pn-filter-class" class="px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none shrink-0">
+                    <option value="NONE">-- Pilih Kelas --</option>
+                    <option value="ALL">Semua Kelas</option>
+                </select>
+            </div>
+
+            <div class="flex items-center justify-between sm:justify-end gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
+                <span id="pn-counter-info" class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-bold">0 Siswa</span>
+                <button onclick="pn_fetchFromGoogleSheet()" title="Tarik data terbaru dari Sheet" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh Sheet
+                </button>
+            </div>
+        </div>
+
+        <!-- LIST DAFTAR SISWA -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+            <!-- Header Ringkasan Kolom Centang -->
+            <div id="pn-summary-header" class="bg-slate-50 px-3 sm:px-4 py-2.5 border-b border-slate-200 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar flex-1">
+                    <span class="text-xs font-bold text-slate-500 uppercase shrink-0">Ringkasan Centang:</span>
+                    <div id="pn-column-pills-container" class="flex items-center gap-1.5 shrink-0"></div>
+                </div>
+                <button type="button" onclick="pn_toggleSummaryHeader()" id="pn-btn-toggle-summary" title="Sembunyikan Ringkasan" class="text-slate-400 hover:text-slate-600 focus:outline-none p-1 rounded-lg hover:bg-slate-200 shrink-0 transition-all">
+                    <i data-lucide="chevron-up" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Bar kecil saat Ringkasan Sembunyi -->
+            <div id="pn-summary-hidden-bar" class="hidden bg-slate-50/70 px-3 sm:px-4 py-1.5 border-b border-slate-200 flex items-center justify-between">
+                <span class="text-[11px] font-medium text-slate-400 italic">Ringkasan centang tersembunyi</span>
+                <button type="button" onclick="pn_toggleSummaryHeader()" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
+                    <i data-lucide="eye" class="w-3.5 h-3.5"></i> Tampilkan Ringkasan
+                </button>
+            </div>
+
+            <!-- List Berurutan Ke Bawah -->
+            <div id="pn-student-vertical-list" class="divide-y divide-slate-100"></div>
+        </div>
+
+    </main>
+
+    <!-- MODAL CONNECT GOOGLE SHEET -->
+    <div id="pn-config-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i data-lucide="link" class="w-4 h-4 text-emerald-600"></i>
+                    <span>Hubungkan ke Google Sheets</span>
+                </h3>
+                <button onclick="pn_closeConfigModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">URL Web App Google Apps Script</label>
+                    <input type="url" id="pn-script-url-input" placeholder="https://script.google.com/macros/s/.../exec" 
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500">
+                    <p class="text-[10px] text-slate-400 mt-1">Masukkan URL Web App dari Apps Script spreadsheet Anda.</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button onclick="pn_closeConfigModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                <button onclick="pn_saveConfig()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan & Sync</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH SISWA -->
+    <div id="pn-student-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm">Tambah Siswa Baru</h3>
+                <button onclick="pn_closeStudentModal()"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Siswa *</label>
+                    <input type="text" id="pn-student-name-input" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kelas</label>
+                        <input type="text" id="pn-student-class-input" placeholder="Kelas 8D" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">NIS</label>
+                        <input type="text" id="pn-student-nis-input" placeholder="14874..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="pn_closeStudentModal()" class="px-4 py-2 text-xs font-semibold text-slate-600">Batal</button>
+                <button onclick="pn_saveStudent()" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH KOLOM -->
+    <div id="pn-column-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-900 text-sm">Tambah Jenis Centang</h3>
+                <button onclick="pn_closeColumnModal()"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Judul Kolom</label>
+                <input type="text" id="pn-column-title-input" placeholder="Contoh: Tugas 1, Lunas SPP..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="pn_closeColumnModal()" class="px-4 py-2 text-xs font-semibold text-slate-600">Batal</button>
+                <button onclick="pn_saveColumn()" class="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-xl">Tambah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="pn-toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
+
+    <script>
+        let pn_scriptUrl = getSharedScriptUrl();
+
+        // Status Sembunyikan Ringkasan Permanen
+        let pn_isSummaryHidden = false;
+        try {
+            pn_isSummaryHidden = localStorage.getItem('penanda_summary_hidden') === 'true';
+        } catch (e) {}
+
+        // Status Sembunyikan Kolom Individu Permanen
+        let pn_hiddenColumns = new Set();
+        try {
+            const savedHidden = JSON.parse(localStorage.getItem('penanda_hidden_columns') || '[]');
+            pn_hiddenColumns = new Set(savedHidden);
+        } catch (e) {
+            pn_hiddenColumns = new Set();
+        }
+
+        let pn_columns = [];
+        try {
+            pn_columns = JSON.parse(localStorage.getItem('penanda_columns')) || [
+                { id: 'col_1', title: 'Tugas 1' },
+                { id: 'col_2', title: 'Bawa Buku' }
+            ];
+        } catch (e) {
+            pn_columns = [
+                { id: 'col_1', title: 'Tugas 1' },
+                { id: 'col_2', title: 'Bawa Buku' }
+            ];
+        }
+
+        let pn_students = [];
+        try {
+            pn_students = JSON.parse(localStorage.getItem('penanda_students')) || [
+                { id: 'stu_1', kelas: 'Kelas 8D', nis: '14874 - 0126159015', nama: 'ABDULLAH ZAIN', checks: { col_1: true, col_2: false } },
+                { id: 'stu_2', kelas: 'Kelas 8D', nis: '14751 - 0125352689', nama: 'AERLANGGA FALAH PRATAMA', checks: { col_1: false, col_2: false } }
+            ];
+        } catch (e) {
+            pn_students = [];
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('pn-search-input').addEventListener('input', () => {
+                pn_toggleClearSearchBtn();
+                pn_render();
+            });
+            document.getElementById('pn-filter-class').addEventListener('change', pn_render);
+
+            const urlInput = document.getElementById('pn-script-url-input');
+            if (urlInput) urlInput.value = pn_scriptUrl;
+            
+            pn_updateBadge(true, "Cloud Sync Active");
+            
+            pn_fetchFromGoogleSheet();
+            pn_populateClassDropdown();
+            pn_applySummaryVisibility();
+            pn_render();
+            lucide.createIcons();
+        });
+
+        // --- SIDEBAR DRAWER CONTROLLER ---
+        function pn_toggleSidebar() {
+            const sidebar = document.getElementById('pn-sidebar');
+            const overlay = document.getElementById('pn-sidebar-overlay');
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            
+            if (isClosed) {
+                pn_openSidebar();
+            } else {
+                pn_closeSidebar();
+            }
+        }
+
+        function pn_openSidebar() {
+            const sidebar = document.getElementById('pn-sidebar');
+            const overlay = document.getElementById('pn-sidebar-overlay');
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+            }, 10);
+            lucide.createIcons();
+        }
+
+        function pn_closeSidebar() {
+            const sidebar = document.getElementById('pn-sidebar');
+            const overlay = document.getElementById('pn-sidebar-overlay');
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 300);
+        }
+
+        // --- VISIBILITY & STORAGE LOGIC ---
+        function pn_toggleSummaryHeader() {
+            pn_isSummaryHidden = !pn_isSummaryHidden;
+            try {
+                localStorage.setItem('penanda_summary_hidden', pn_isSummaryHidden.toString());
+            } catch (e) {}
+            pn_applySummaryVisibility();
+        }
+
+        function pn_applySummaryVisibility() {
+            const header = document.getElementById('pn-summary-header');
+            const hiddenBar = document.getElementById('pn-summary-hidden-bar');
+            if (pn_isSummaryHidden) {
+                header.classList.add('hidden');
+                hiddenBar.classList.remove('hidden');
+            } else {
+                header.classList.remove('hidden');
+                hiddenBar.classList.add('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        function pn_isColumnHidden(col) {
+            return pn_hiddenColumns.has(col.id) || pn_hiddenColumns.has(col.title);
+        }
+
+        function pn_toggleColumnVisibility(colId) {
+            const col = pn_columns.find(c => c.id === colId);
+            const key = col ? col.title : colId;
+
+            if (pn_hiddenColumns.has(colId) || pn_hiddenColumns.has(key)) {
+                pn_hiddenColumns.delete(colId);
+                if (key) pn_hiddenColumns.delete(key);
+            } else {
+                pn_hiddenColumns.add(colId);
+                if (key) pn_hiddenColumns.add(key);
+            }
+
+            try {
+                localStorage.setItem('penanda_hidden_columns', JSON.stringify(Array.from(pn_hiddenColumns)));
+            } catch (e) {}
+
+            pn_render();
+        }
+
+        function pn_clearSearchInput() {
+            const input = document.getElementById('pn-search-input');
+            input.value = '';
+            pn_toggleClearSearchBtn();
+            pn_render();
+            input.focus();
+        }
+
+        function pn_toggleClearSearchBtn() {
+            const input = document.getElementById('pn-search-input');
+            const btn = document.getElementById('pn-clear-search-btn');
+            if (btn) {
+                if (input.value.trim().length > 0) {
+                    btn.classList.remove('hidden');
+                } else {
+                    btn.classList.add('hidden');
+                }
+            }
+        }
+
+        function pn_saveLocal() {
+            try {
+                localStorage.setItem('penanda_columns', JSON.stringify(pn_columns));
+                localStorage.setItem('penanda_students', JSON.stringify(pn_students));
+            } catch (e) {}
+        }
+
+        function pn_render() {
+            const searchVal = document.getElementById('pn-search-input').value.toLowerCase().trim();
+            const classVal = document.getElementById('pn-filter-class').value;
+
+            if (classVal === 'NONE') {
+                document.getElementById('pn-counter-info').innerText = '0 Siswa';
+                pn_renderPills([]);
+                pn_renderList([]);
+                lucide.createIcons();
+                return;
+            }
+
+            const filtered = pn_students.filter(s => {
+                const matchSearch = (s.nama && s.nama.toLowerCase().includes(searchVal)) ||
+                                    (s.kelas && s.kelas.toLowerCase().includes(searchVal)) ||
+                                    (s.nis && s.nis.toLowerCase().includes(searchVal));
+                const matchClass = (classVal === 'ALL') || (s.kelas === classVal);
+                return matchSearch && matchClass;
+            });
+
+            document.getElementById('pn-counter-info').innerText = `${filtered.length} Siswa`;
+
+            pn_renderPills(filtered);
+            pn_renderList(filtered);
+            lucide.createIcons();
+        }
+
+        function pn_renderPills(filteredList) {
+            const container = document.getElementById('pn-column-pills-container');
+            container.innerHTML = pn_columns.map(col => {
+                const isHidden = pn_isColumnHidden(col);
+                const count = filteredList.reduce((acc, s) => acc + (s.checks && s.checks[col.id] ? 1 : 0), 0);
+                return `
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold ${isHidden ? 'opacity-40 bg-slate-100 text-slate-400' : 'text-slate-700'} shadow-2xs transition-all">
+                        <button type="button" onclick="pn_toggleColumnVisibility('${col.id}')" title="${isHidden ? 'Tampilkan centang kolom ini' : 'Sembunyikan centang kolom ini'}" class="p-0.5 hover:text-indigo-600 focus:outline-none flex items-center shrink-0">
+                            <i data-lucide="${isHidden ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <span class="${isHidden ? 'line-through' : ''}">${pn_escapeHtml(col.title)}</span>
+                        <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
+                            ${count}/${filteredList.length}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function pn_renderList(filteredList) {
+            const list = document.getElementById('pn-student-vertical-list');
+            const classVal = document.getElementById('pn-filter-class').value;
+
+            if (classVal === 'NONE') {
+                list.innerHTML = `
+                    <div class="p-8 text-center text-slate-400">
+                        <i data-lucide="filter" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                        <p class="text-xs font-semibold text-slate-500">Silakan pilih kelas terlebih dahulu</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Pilih salah satu kelas di menu dropdown atas untuk menampilkan daftar siswa.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (filteredList.length === 0) {
+                list.innerHTML = `
+                    <div class="p-8 text-center text-slate-400">
+                        <p class="text-xs font-semibold text-slate-500">Tidak ada siswa yang cocok dengan pencarian.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const visibleColumns = pn_columns.filter(col => !pn_isColumnHidden(col));
+
+            list.innerHTML = filteredList.map((s, idx) => {
+                const buttons = visibleColumns.map(col => {
+                    const isChecked = Boolean(s.checks && s.checks[col.id]);
+                    return `
+                        <button type="button" onclick="pn_toggleCheck('${s.id}', '${col.id}')" 
+                            class="touch-btn inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold select-none cursor-pointer transition-all ${
+                                isChecked ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }">
+                            <div class="w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isChecked ? 'bg-white text-indigo-600 border-white' : 'bg-white border-slate-300'}">
+                                ${isChecked ? '<i data-lucide="check" class="w-3.5 h-3.5 stroke-[3]"></i>' : ''}
+                            </div>
+                            <span class="truncate max-w-[110px]">${pn_escapeHtml(col.title)}</span>
+                        </button>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="p-3 sm:px-4 sm:py-3.5 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                            <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 font-bold text-xs flex items-center justify-center shrink-0">
+                                ${idx + 1}
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="font-bold text-slate-900 text-xs sm:text-sm leading-tight truncate">${pn_escapeHtml(s.nama)}</h3>
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 shrink-0">
+                                        ${pn_escapeHtml(s.kelas || 'Umum')}
+                                    </span>
+                                </div>
+                                ${s.nis ? `<p class="text-[10px] text-slate-400 mt-0.5">NIS: ${pn_escapeHtml(s.nis)}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 sm:pb-0 shrink-0">
+                            ${buttons}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function pn_toggleCheck(studentId, colId) {
+            const student = pn_students.find(s => s.id === studentId);
+            const col = pn_columns.find(c => c.id === colId);
+            if (!student || !col) return;
+
+            if (!student.checks) student.checks = {};
+            student.checks[colId] = !student.checks[colId];
+
+            pn_render();
+            pn_saveLocal();
+
+            if (pn_scriptUrl) {
+                try {
+                    await fetch(pn_scriptUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'updateCheck',
+                            type: 'penanda',
+                            studentId: student.id,
+                            nis: student.nis,
+                            nama: student.nama,
+                            columnTitle: col.title,
+                            isChecked: student.checks[colId]
+                        })
+                    });
+                    pn_showToast("Tersimpan ke Sheet 'Penanda'", "success");
+                } catch (e) {
+                    console.error("Sheet Sync error:", e);
+                }
+            }
+        }
+
+        function pn_populateClassDropdown() {
+            const select = document.getElementById('pn-filter-class');
+            const selectedVal = select.value || 'NONE';
+            const classesSet = new Set(pn_students.map(s => s.kelas).filter(Boolean));
+            select.innerHTML = '<option value="NONE">-- Pilih Kelas --</option><option value="ALL">Semua Kelas</option>' + 
+                Array.from(classesSet).sort().map(c => `<option value="${pn_escapeHtml(c)}">${pn_escapeHtml(c)}</option>`).join('');
+            select.value = selectedVal;
+        }
+
+        function pn_openConfigModal() { document.getElementById('pn-config-modal').classList.remove('hidden'); }
+        function pn_closeConfigModal() { document.getElementById('pn-config-modal').classList.add('hidden'); }
+        
+        async function pn_saveConfig() {
+            pn_scriptUrl = document.getElementById('pn-script-url-input').value.trim() || getSharedScriptUrl();
+            nl_scriptUrl = pn_scriptUrl;
+            setSharedScriptUrl(pn_scriptUrl);
+            const nlUrlInput = document.getElementById('nl-script-url-input');
+            if (nlUrlInput) nlUrlInput.value = pn_scriptUrl;
+
+            pn_closeConfigModal();
+            if (pn_scriptUrl) {
+                pn_updateBadge(true, "Cloud Sync Active");
+                await pn_fetchFromGoogleSheet();
+            } else {
+                pn_updateBadge(false, "Disk Mode");
+            }
+        }
+
+        async function pn_fetchFromGoogleSheet() {
+            if (!pn_scriptUrl) return;
+            try {
+                pn_showToast("Mengambil data dari Sheet...", "info");
+                const res = await fetch(pn_scriptUrl + (pn_scriptUrl.includes('?') ? '&' : '?') + 'type=penanda');
+                const data = await res.json();
+                if (data && data.students && data.students.length > 0) {
+                    pn_columns = data.columns;
+                    pn_students = data.students;
+                    pn_saveLocal();
+                    pn_populateClassDropdown();
+                    pn_render();
+                    pn_showToast("Data Sheet berhasil dimuat!", "success");
+                }
+            } catch (err) {
+                console.warn("Fetch from sheet failed, using local fallback", err);
+            }
+        }
+
+        function pn_openAddStudentModal() { document.getElementById('pn-student-modal').classList.remove('hidden'); }
+        function pn_closeStudentModal() { document.getElementById('pn-student-modal').classList.add('hidden'); }
+        
+        function pn_saveStudent() {
+            const nama = document.getElementById('pn-student-name-input').value.trim();
+            const kelas = document.getElementById('pn-student-class-input').value.trim() || 'Kelas 8D';
+            const nis = document.getElementById('pn-student-nis-input').value.trim();
+            if (!nama) return;
+
+            const newStudent = { id: 'stu_' + Date.now(), nis, nama, kelas, checks: {} };
+            pn_students.unshift(newStudent);
+            pn_saveLocal();
+            pn_populateClassDropdown();
+            pn_render();
+            pn_closeStudentModal();
+            pn_syncAllToSheet();
+        }
+
+        function pn_openAddColumnModal() { document.getElementById('pn-column-modal').classList.remove('hidden'); }
+        function pn_closeColumnModal() { document.getElementById('pn-column-modal').classList.add('hidden'); }
+        
+        function pn_saveColumn() {
+            const title = document.getElementById('pn-column-title-input').value.trim();
+            if (!title) return;
+
+            pn_columns.push({ id: 'col_' + Date.now(), title });
+            pn_saveLocal();
+            pn_render();
+            pn_closeColumnModal();
+            pn_syncAllToSheet();
+        }
+
+        async function pn_syncAllToSheet() {
+            if (!pn_scriptUrl) return;
+            try {
+                await fetch(pn_scriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'syncAll', type: 'penanda', columns: pn_columns, students: pn_students })
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function pn_exportToExcel() {
+            const exportData = pn_students.map((s, idx) => {
+                const row = { "No": idx + 1, "Kelas": s.kelas || "", "NIS": s.nis || "", "Nama Siswa": s.nama || "" };
+                pn_columns.forEach(col => { row[col.title] = (s.checks && s.checks[col.id]) ? "YA" : "TIDAK"; });
+                return row;
+            });
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Penanda");
+            XLSX.writeFile(wb, `Penanda_Siswa_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        function pn_updateBadge(isOnline, text) {
+            const badge = document.getElementById('pn-sync-status-badge');
+            badge.className = isOnline ? 
+                "inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200" :
+                "inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200";
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span> ${text}`;
+        }
+
+        function pn_showToast(msg, type = 'info') {
+            const container = document.getElementById('pn-toast-container');
+            const toast = document.createElement('div');
+            toast.className = `p-3 rounded-xl shadow-lg text-xs font-semibold text-white transition-all transform duration-300 translate-y-2 opacity-0 ${type === 'success' ? 'bg-emerald-600' : 'bg-slate-800'}`;
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 2500);
+        }
+
+        function pn_escapeHtml(str) {
+            return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+
+    </div>
+
+    <!-- =========================================================
+         MODUL: INPUT NILAI
+    ========================================================== -->
+    <div id="view-nilai" class="app-view min-h-screen w-full flex-col text-slate-800 relative">
+        <button onclick="showView('landing')" title="Kembali ke Menu Utama" class="home-fab p-2 rounded-xl bg-white/90 backdrop-blur border border-slate-200 shadow-md hover:bg-slate-100 active:scale-95 text-slate-700 transition-all flex items-center justify-center">
+            <i data-lucide="home" class="w-4 h-4"></i>
+        </button>
+
 
     <!-- HEADER NAVIGATION -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
@@ -40,7 +888,7 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <h1 class="font-bold text-slate-900 text-base sm:text-lg leading-tight">Input Nilai Siswa</h1>
-                            <span id="sync-status-badge" class="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                            <span id="nl-sync-status-badge" class="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Disk Mode
                             </span>
                         </div>
@@ -51,12 +899,12 @@
 
             <!-- BUTTON ACTIONS -->
             <div class="flex items-center gap-2">
-                <button onclick="openCopyModal('all')" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
+                <button onclick="nl_openCopyModal('all')" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
                     <i data-lucide="copy" class="w-4 h-4"></i>
                     <span class="truncate">Copy Hasil Nilai</span>
                 </button>
 
-                <button onclick="toggleSidebar(true)" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
+                <button onclick="nl_toggleSidebar(true)" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition-all min-h-[40px]">
                     <i data-lucide="menu" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">Menu</span>
                 </button>
@@ -71,22 +919,22 @@
             <div class="flex items-center gap-2 flex-1">
                 <div class="relative flex-1">
                     <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="search-input" placeholder="Cari nama, kelas, NIS..." 
+                    <input type="text" id="nl-search-input" placeholder="Cari nama, kelas, NIS..." 
                         class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button type="button" id="clear-search-btn" onclick="clearSearchInput()" title="Hapus pencarian" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-0.5 rounded-full hover:bg-slate-200 transition-all">
+                    <button type="button" id="nl-clear-search-btn" onclick="nl_clearSearchInput()" title="Hapus pencarian" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-0.5 rounded-full hover:bg-slate-200 transition-all">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     </button>
                 </div>
 
-                <select id="filter-class" class="px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none shrink-0">
+                <select id="nl-filter-class" class="px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none shrink-0">
                     <option value="NONE">-- Pilih Kelas --</option>
                     <option value="ALL">Semua Kelas</option>
                 </select>
             </div>
 
             <div class="flex items-center justify-between sm:justify-end gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
-                <span id="counter-info" class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-bold">0 Siswa</span>
-                <button onclick="fetchFromGoogleSheet()" title="Tarik data terbaru dari Sheet" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
+                <span id="nl-counter-info" class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-bold">0 Siswa</span>
+                <button onclick="nl_fetchFromGoogleSheet()" title="Tarik data terbaru dari Sheet" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
                     <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh Sheet
                 </button>
             </div>
@@ -97,24 +945,24 @@
             <!-- Header Ringkasan Judul Nilai & Rata-rata Kolom -->
             <div class="bg-slate-50 px-3 sm:px-4 py-2.5 border-b border-slate-200 flex items-center justify-between gap-2 overflow-x-auto custom-scrollbar">
                 <span class="text-xs font-bold text-slate-500 uppercase shrink-0">Kolom Nilai & Rata-Rata:</span>
-                <div id="column-pills-container" class="flex items-center gap-1.5 shrink-0"></div>
+                <div id="nl-column-pills-container" class="flex items-center gap-1.5 shrink-0"></div>
             </div>
 
             <!-- List Berurutan Ke Bawah -->
-            <div id="student-vertical-list" class="divide-y divide-slate-100"></div>
+            <div id="nl-student-vertical-list" class="divide-y divide-slate-100"></div>
         </div>
 
     </main>
 
     <!-- MODAL COPY HASIL NILAI -->
-    <div id="copy-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div id="nl-copy-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <i data-lucide="copy" class="w-4 h-4 text-emerald-600"></i>
                     <span>Copy Hasil Nilai</span>
                 </h3>
-                <button onclick="closeCopyModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <button onclick="nl_closeCopyModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             
             <div class="space-y-3">
@@ -122,10 +970,10 @@
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Format Output</label>
                     <div class="flex gap-2">
-                        <button onclick="switchCopyFormat('excel')" id="btn-format-excel" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-emerald-600 text-white border-emerald-600">
+                        <button onclick="nl_switchCopyFormat('excel')" id="nl-btn-format-excel" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-emerald-600 text-white border-emerald-600">
                             Format Excel / Sheet
                         </button>
-                        <button onclick="switchCopyFormat('wa')" id="btn-format-wa" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200">
+                        <button onclick="nl_switchCopyFormat('wa')" id="nl-btn-format-wa" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200">
                             Format Teks / WA
                         </button>
                     </div>
@@ -135,7 +983,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Isi Data yang Di-copy</label>
-                        <select id="copy-mode-select" onchange="updateCopySettings()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <select id="nl-copy-mode-select" onchange="nl_updateCopySettings()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                             <option value="full">Lengkap (Identitas + Nilai)</option>
                             <option value="values_only">Hanya Nilai Angka Saja</option>
                         </select>
@@ -143,7 +991,7 @@
 
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pilih Judul Nilai</label>
-                        <select id="copy-column-select" onchange="updateCopySettings()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <select id="nl-copy-column-select" onchange="nl_updateCopySettings()" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                             <option value="all">Semua Judul Nilai</option>
                             <option value="avg">Rata-Rata Saja</option>
                         </select>
@@ -151,14 +999,14 @@
                 </div>
 
                 <div>
-                    <textarea id="copy-preview-text" readonly rows="7" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none custom-scrollbar"></textarea>
-                    <p id="copy-hint-text" class="text-[11px] text-slate-400 mt-1">Tekan tombol di bawah untuk menyalin ke clipboard, lalu paste (Ctrl+V) langsung di Excel/WA.</p>
+                    <textarea id="nl-copy-preview-text" readonly rows="7" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none custom-scrollbar"></textarea>
+                    <p id="nl-copy-hint-text" class="text-[11px] text-slate-400 mt-1">Tekan tombol di bawah untuk menyalin ke clipboard, lalu paste (Ctrl+V) langsung di Excel/WA.</p>
                 </div>
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-2">
-                <button onclick="closeCopyModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Tutup</button>
-                <button onclick="execCopyText()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5">
+                <button onclick="nl_closeCopyModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Tutup</button>
+                <button onclick="nl_execCopyText()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5">
                     <i data-lucide="clipboard" class="w-4 h-4"></i> Copy Sekarang
                 </button>
             </div>
@@ -166,111 +1014,111 @@
     </div>
 
     <!-- MODAL CONNECT GOOGLE SHEET -->
-    <div id="config-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div id="nl-config-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <i data-lucide="link" class="w-4 h-4 text-indigo-600"></i>
                     <span>Hubungkan ke Google Sheets</span>
                 </h3>
-                <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <button onclick="nl_closeConfigModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">URL Web App Google Apps Script</label>
-                    <input type="url" id="script-url-input" placeholder="https://script.google.com/macros/s/.../exec" 
+                    <input type="url" id="nl-script-url-input" placeholder="https://script.google.com/macros/s/.../exec" 
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
                     <p class="text-[10px] text-slate-400 mt-1">Masukkan URL Web App Apps Script yang terhubung ke tab "Input Nilai".</p>
                 </div>
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-2">
-                <button onclick="closeConfigModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
-                <button onclick="saveConfig()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan & Sync</button>
+                <button onclick="nl_closeConfigModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                <button onclick="nl_saveConfig()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan & Sync</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL TAMBAH / EDIT SISWA -->
-    <div id="student-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div id="nl-student-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 id="student-modal-title" class="font-bold text-slate-900 text-sm">Tambah Siswa Baru</h3>
-                <button onclick="closeStudentModal()"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
+                <h3 id="nl-student-modal-title" class="font-bold text-slate-900 text-sm">Tambah Siswa Baru</h3>
+                <button onclick="nl_closeStudentModal()"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
             </div>
-            <input type="hidden" id="edit-student-id">
+            <input type="hidden" id="nl-edit-student-id">
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Nama Siswa *</label>
-                    <input type="text" id="student-name-input" placeholder="Ahmad Nuriel" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                    <input type="text" id="nl-student-name-input" placeholder="Ahmad Nuriel" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Kelas</label>
-                        <input type="text" id="student-class-input" placeholder="Kelas 8D" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                        <input type="text" id="nl-student-class-input" placeholder="Kelas 8D" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">NIS</label>
-                        <input type="text" id="student-nis-input" placeholder="14782..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                        <input type="text" id="nl-student-nis-input" placeholder="14782..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
                     </div>
                 </div>
             </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button onclick="closeStudentModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
-                <button onclick="saveStudent()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan</button>
+                <button onclick="nl_closeStudentModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                <button onclick="nl_saveStudent()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL TAMBAH / EDIT JUDUL NILAI -->
-    <div id="column-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div id="nl-column-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 id="column-modal-title" class="font-bold text-slate-900 text-sm">Tambah Judul Nilai</h3>
-                <button onclick="closeColumnModal()"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
+                <h3 id="nl-column-modal-title" class="font-bold text-slate-900 text-sm">Tambah Judul Nilai</h3>
+                <button onclick="nl_closeColumnModal()"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
             </div>
-            <input type="hidden" id="edit-col-id">
+            <input type="hidden" id="nl-edit-col-id">
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Judul Kolom Nilai</label>
-                <input type="text" id="column-title-input" placeholder="Contoh: Tugas 1, UH 1, PTS..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                <input type="text" id="nl-column-title-input" placeholder="Contoh: Tugas 1, UH 1, PTS..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
             </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button onclick="closeColumnModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
-                <button onclick="saveColumn()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan</button>
+                <button onclick="nl_closeColumnModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                <button onclick="nl_saveColumn()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL KONFIRMASI (HAPUS SISWA / KOSONGKAN NILAI) -->
-    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div id="nl-confirm-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
                     <i data-lucide="alert-triangle" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h3 id="confirm-modal-title" class="font-bold text-slate-900 text-sm">Konfirmasi</h3>
-                    <p id="confirm-modal-msg" class="text-xs text-slate-500 mt-0.5 leading-relaxed">Apakah Anda yakin?</p>
+                    <h3 id="nl-confirm-modal-title" class="font-bold text-slate-900 text-sm">Konfirmasi</h3>
+                    <p id="nl-confirm-modal-msg" class="text-xs text-slate-500 mt-0.5 leading-relaxed">Apakah Anda yakin?</p>
                 </div>
             </div>
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <button onclick="closeConfirmModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
-                <button id="confirm-modal-btn" onclick="executeConfirmAction()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all">Ya, Lanjutkan</button>
+                <button onclick="nl_closeConfirmModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                <button id="nl-confirm-modal-btn" onclick="nl_executeConfirmAction()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all">Ya, Lanjutkan</button>
             </div>
         </div>
     </div>
 
     <!-- TOAST CONTAINER -->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
+    <div id="nl-toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
 
     <!-- SIDEBAR DRAWER (HIDE / UNHIDE MENU) -->
-    <div id="sidebar-drawer" class="fixed inset-0 z-50 pointer-events-none">
+    <div id="nl-sidebar-drawer" class="fixed inset-0 z-50 pointer-events-none">
         <!-- Backdrop Overlay -->
-        <div id="sidebar-backdrop" onclick="toggleSidebar(false)" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+        <div id="nl-sidebar-backdrop" onclick="nl_toggleSidebar(false)" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs opacity-0 transition-opacity duration-300 pointer-events-none"></div>
         
         <!-- Drawer Panel -->
-        <div id="sidebar-panel" class="absolute top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl border-r border-slate-200 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between p-5 pointer-events-auto">
+        <div id="nl-sidebar-panel" class="absolute top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl border-r border-slate-200 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between p-5 pointer-events-auto">
             <div class="space-y-6">
                 <!-- Sidebar Header -->
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -280,7 +1128,7 @@
                         </div>
                         <h2 class="font-bold text-slate-900 text-sm">Menu & Kelola</h2>
                     </div>
-                    <button onclick="toggleSidebar(false)" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all">
+                    <button onclick="nl_toggleSidebar(false)" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -290,11 +1138,11 @@
                     <div>
                         <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Kelola Data Nilai</span>
                         <div class="space-y-2">
-                            <button onclick="openAddColumnModal(); toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
+                            <button onclick="nl_openAddColumnModal(); nl_toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
                                 <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600 shrink-0"></i>
                                 <span>+ Tambah Judul Nilai</span>
                             </button>
-                            <button onclick="openAddStudentModal(); toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
+                            <button onclick="nl_openAddStudentModal(); nl_toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
                                 <i data-lucide="user-plus" class="w-4 h-4 text-indigo-600 shrink-0"></i>
                                 <span>+ Tambah Siswa</span>
                             </button>
@@ -304,11 +1152,11 @@
                     <div>
                         <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Integrasi & File</span>
                         <div class="space-y-2">
-                            <button onclick="openConfigModal(); toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
+                            <button onclick="nl_openConfigModal(); nl_toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
                                 <i data-lucide="link-2" class="w-4 h-4 text-indigo-600 shrink-0"></i>
                                 <span>Connect Google Sheet</span>
                             </button>
-                            <button onclick="exportToExcel(); toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
+                            <button onclick="nl_exportToExcel(); nl_toggleSidebar(false);" class="w-full flex items-center gap-3 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all text-left">
                                 <i data-lucide="download" class="w-4 h-4 text-emerald-600 shrink-0"></i>
                                 <span>Export ke Excel (.xlsx)</span>
                             </button>
@@ -326,52 +1174,47 @@
     </div>
 
     <script>
-        const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCTjH2MMiAH73ekDjrkQPv9hOVt-7nGIOsC6-dR-r8fj55Gcaen75iYmDcAx-NtS8JZw/exec';
-        let scriptUrl = localStorage.getItem('input_nilai_script_url') || DEFAULT_SCRIPT_URL;
+        let nl_scriptUrl = getSharedScriptUrl();
         
         // Load hidden columns by Title from localStorage so visibility preferences persist across sessions & Google Sheet syncs
-        let hiddenColumns = new Set(JSON.parse(localStorage.getItem('input_nilai_hidden_columns') || '[]'));
-        let copyFormat = 'excel';
-        let copyMode = 'full';
-        let copyColumnFilter = 'all';
-        let pendingConfirmAction = null;
+        let nl_hiddenColumns = new Set(JSON.parse(localStorage.getItem('input_nilai_hidden_columns') || '[]'));
+        let nl_copyFormat = 'excel';
+        let nl_copyMode = 'full';
+        let nl_copyColumnFilter = 'all';
+        let nl_pendingConfirmAction = null;
 
-        let gradeColumns = JSON.parse(localStorage.getItem('input_nilai_columns')) || [
+        let nl_gradeColumns = JSON.parse(localStorage.getItem('input_nilai_columns')) || [
             { id: 'col_1', title: 'Tugas 1' },
             { id: 'col_2', title: 'UH 1' },
             { id: 'col_3', title: 'PTS' }
         ];
 
-        let students = JSON.parse(localStorage.getItem('input_nilai_students')) || [
+        let nl_students = JSON.parse(localStorage.getItem('input_nilai_students')) || [
             { id: 'stu_1', kelas: 'Kelas 8D', nis: '14874 - 0126159015', nama: 'ABDULLAH ZAIN', grades: { col_1: '85', col_2: '90', col_3: '88' } },
             { id: 'stu_2', kelas: 'Kelas 8D', nis: '14751 - 0125352689', nama: 'AERLANGGA FALAH PRATAMA', grades: { col_1: '78', col_2: '82', col_3: '80' } },
             { id: 'stu_3', kelas: 'Kelas 8D', nis: '14782 - 0102606954', nama: 'AHMAD NURIEL', grades: { col_1: '92', col_2: '88', col_3: '95' } }
         ];
 
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('search-input').addEventListener('input', () => {
-                toggleClearSearchBtn();
-                render();
+            document.getElementById('nl-search-input').addEventListener('input', () => {
+                nl_toggleClearSearchBtn();
+                nl_render();
             });
-            document.getElementById('filter-class').addEventListener('change', render);
+            document.getElementById('nl-filter-class').addEventListener('change', nl_render);
 
-            if (!localStorage.getItem('input_nilai_script_url')) {
-                localStorage.setItem('input_nilai_script_url', DEFAULT_SCRIPT_URL);
-            }
+            document.getElementById('nl-script-url-input').value = nl_scriptUrl;
+            nl_updateBadge(true, "Cloud Sync Active");
 
-            document.getElementById('script-url-input').value = scriptUrl;
-            updateBadge(true, "Cloud Sync Active");
-
-            fetchFromGoogleSheet();
-            populateClassDropdown();
-            render();
+            nl_fetchFromGoogleSheet();
+            nl_populateClassDropdown();
+            nl_render();
             lucide.createIcons();
         });
 
-        function toggleSidebar(show) {
-            const drawer = document.getElementById('sidebar-drawer');
-            const backdrop = document.getElementById('sidebar-backdrop');
-            const panel = document.getElementById('sidebar-panel');
+        function nl_toggleSidebar(show) {
+            const drawer = document.getElementById('nl-sidebar-drawer');
+            const backdrop = document.getElementById('nl-sidebar-backdrop');
+            const panel = document.getElementById('nl-sidebar-panel');
             if (!drawer || !backdrop || !panel) return;
             
             const isVisible = drawer.classList.contains('active');
@@ -396,35 +1239,35 @@
             }
         }
 
-        function saveLocal() {
-            localStorage.setItem('input_nilai_columns', JSON.stringify(gradeColumns));
-            localStorage.setItem('input_nilai_students', JSON.stringify(students));
+        function nl_saveLocal() {
+            localStorage.setItem('input_nilai_columns', JSON.stringify(nl_gradeColumns));
+            localStorage.setItem('input_nilai_students', JSON.stringify(nl_students));
         }
 
-        function clearSearchInput() {
-            const input = document.getElementById('search-input');
+        function nl_clearSearchInput() {
+            const input = document.getElementById('nl-search-input');
             input.value = '';
-            toggleClearSearchBtn();
-            render();
+            nl_toggleClearSearchBtn();
+            nl_render();
             input.focus();
         }
 
-        function toggleClearSearchBtn() {
-            const input = document.getElementById('search-input');
-            const btn = document.getElementById('clear-search-btn');
+        function nl_toggleClearSearchBtn() {
+            const input = document.getElementById('nl-search-input');
+            const btn = document.getElementById('nl-clear-search-btn');
             if (btn) {
                 if (input.value.trim().length > 0) btn.classList.remove('hidden');
                 else btn.classList.add('hidden');
             }
         }
 
-        function getFilteredStudents() {
-            const searchVal = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
-            const classVal = document.getElementById('filter-class')?.value || 'NONE';
+        function nl_getFilteredStudents() {
+            const searchVal = (document.getElementById('nl-search-input')?.value || '').toLowerCase().trim();
+            const classVal = document.getElementById('nl-filter-class')?.value || 'NONE';
 
             if (classVal === 'NONE') return [];
 
-            return students.filter(s => {
+            return nl_students.filter(s => {
                 const matchSearch = (s.nama && s.nama.toLowerCase().includes(searchVal)) ||
                                     (s.kelas && s.kelas.toLowerCase().includes(searchVal)) ||
                                     (s.nis && s.nis.toLowerCase().includes(searchVal));
@@ -433,21 +1276,21 @@
             });
         }
 
-        function render() {
-            const classVal = document.getElementById('filter-class').value;
-            const filtered = getFilteredStudents();
+        function nl_render() {
+            const classVal = document.getElementById('nl-filter-class').value;
+            const filtered = nl_getFilteredStudents();
 
-            document.getElementById('counter-info').innerText = `${filtered.length} Siswa`;
+            document.getElementById('nl-counter-info').innerText = `${filtered.length} Siswa`;
 
-            renderPills(filtered);
-            renderList(filtered, classVal);
+            nl_renderPills(filtered);
+            nl_renderList(filtered, classVal);
             lucide.createIcons();
         }
 
-        function renderPills(filteredList) {
-            const container = document.getElementById('column-pills-container');
-            const pillsHtml = gradeColumns.map(col => {
-                const isHidden = hiddenColumns.has(col.title);
+        function nl_renderPills(filteredList) {
+            const container = document.getElementById('nl-column-pills-container');
+            const pillsHtml = nl_gradeColumns.map(col => {
+                const isHidden = nl_hiddenColumns.has(col.title);
                 
                 let totalScore = 0;
                 let scoredCount = 0;
@@ -463,23 +1306,23 @@
                 const safeTitle = col.title.replace(/'/g, "\\'");
                 return `
                     <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold ${isHidden ? 'opacity-40 bg-slate-100 text-slate-400' : 'text-slate-700'} shadow-2xs transition-all">
-                        <button type="button" onclick="toggleColumnVisibility('${safeTitle}')" title="${isHidden ? 'Tampilkan kolom ini' : 'Sembunyikan kolom ini'}" class="p-0.5 hover:text-indigo-600 focus:outline-none flex items-center shrink-0">
+                        <button type="button" onclick="nl_toggleColumnVisibility('${safeTitle}')" title="${isHidden ? 'Tampilkan kolom ini' : 'Sembunyikan kolom ini'}" class="p-0.5 hover:text-indigo-600 focus:outline-none flex items-center shrink-0">
                             <i data-lucide="${isHidden ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i>
                         </button>
-                        <span class="${isHidden ? 'line-through' : ''}">${escapeHtml(col.title)}</span>
+                        <span class="${isHidden ? 'line-through' : ''}">${nl_escapeHtml(col.title)}</span>
                         <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded-md text-[10px] font-bold" title="Rata-rata Nilai">
                             RATA: ${avg}
                         </span>
-                        <button onclick="openCopyModal('${col.id}')" title="Copy Nilai Kolom Ini Saja" class="p-0.5 text-emerald-600 hover:text-emerald-800 focus:outline-none">
+                        <button onclick="nl_openCopyModal('${col.id}')" title="Copy Nilai Kolom Ini Saja" class="p-0.5 text-emerald-600 hover:text-emerald-800 focus:outline-none">
                             <i data-lucide="copy" class="w-3 h-3"></i>
                         </button>
-                        <button onclick="clearColumnGrades('${col.id}')" title="Kosongkan Semua Nilai Kolom Ini" class="p-0.5 text-amber-600 hover:text-amber-800 focus:outline-none">
+                        <button onclick="nl_clearColumnGrades('${col.id}')" title="Kosongkan Semua Nilai Kolom Ini" class="p-0.5 text-amber-600 hover:text-amber-800 focus:outline-none">
                             <i data-lucide="eraser" class="w-3 h-3"></i>
                         </button>
-                        <button onclick="openEditColumnModal('${col.id}')" title="Ubah Judul" class="p-0.5 text-slate-400 hover:text-slate-600">
+                        <button onclick="nl_openEditColumnModal('${col.id}')" title="Ubah Judul" class="p-0.5 text-slate-400 hover:text-slate-600">
                             <i data-lucide="edit-2" class="w-3 h-3"></i>
                         </button>
-                        <button onclick="deleteColumn('${col.id}')" title="Hapus Judul" class="p-0.5 text-slate-400 hover:text-red-600">
+                        <button onclick="nl_deleteColumn('${col.id}')" title="Hapus Judul" class="p-0.5 text-slate-400 hover:text-red-600">
                             <i data-lucide="trash-2" class="w-3 h-3"></i>
                         </button>
                     </div>
@@ -489,7 +1332,7 @@
             const avgPillHtml = `
                 <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 border border-indigo-200 rounded-lg text-xs font-bold text-indigo-700 shadow-2xs transition-all">
                     <span>Rata-Rata Siswa</span>
-                    <button onclick="openCopyModal('avg')" title="Copy Nilai Rata-Rata Saja" class="p-0.5 text-indigo-600 hover:text-indigo-800 focus:outline-none">
+                    <button onclick="nl_openCopyModal('avg')" title="Copy Nilai Rata-Rata Saja" class="p-0.5 text-indigo-600 hover:text-indigo-800 focus:outline-none">
                         <i data-lucide="copy" class="w-3 h-3"></i>
                     </button>
                 </div>
@@ -498,8 +1341,8 @@
             container.innerHTML = pillsHtml + avgPillHtml;
         }
 
-        function renderList(filteredList, classVal) {
-            const list = document.getElementById('student-vertical-list');
+        function nl_renderList(filteredList, classVal) {
+            const list = document.getElementById('nl-student-vertical-list');
 
             if (classVal === 'NONE') {
                 list.innerHTML = `
@@ -521,7 +1364,7 @@
                 return;
             }
 
-            const visibleColumns = gradeColumns.filter(col => !hiddenColumns.has(col.title));
+            const visibleColumns = nl_gradeColumns.filter(col => !nl_hiddenColumns.has(col.title));
 
             list.innerHTML = filteredList.map((s, idx) => {
                 let totalScore = 0;
@@ -536,15 +1379,15 @@
 
                     return `
                         <div class="flex flex-col items-center gap-1 shrink-0">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase truncate max-w-[80px]">${escapeHtml(col.title)}</span>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase truncate max-w-[80px]">${nl_escapeHtml(col.title)}</span>
                             <input type="number" min="0" max="100" step="any" 
-                                value="${escapeHtml(scoreVal)}" 
+                                value="${nl_escapeHtml(scoreVal)}" 
                                 placeholder="0" 
                                 data-stu-idx="${idx}"
                                 data-col-idx="${cIdx}"
                                 onfocus="this.select()"
-                                onkeydown="handleGradeKeyDown(event, ${idx}, ${cIdx})"
-                                oninput="updateGrade('${s.id}', '${col.id}', this.value)"
+                                onkeydown="nl_handleGradeKeyDown(event, ${idx}, ${cIdx})"
+                                oninput="nl_updateGrade('${s.id}', '${col.id}', this.value)"
                                 class="w-16 sm:w-20 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-center text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
                         </div>
                     `;
@@ -560,16 +1403,16 @@
                             </span>
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <h3 class="font-bold text-slate-900 text-xs sm:text-sm leading-tight truncate">${escapeHtml(s.nama)}</h3>
+                                    <h3 class="font-bold text-slate-900 text-xs sm:text-sm leading-tight truncate">${nl_escapeHtml(s.nama)}</h3>
                                     <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 shrink-0">
-                                        ${escapeHtml(s.kelas || 'Umum')}
+                                        ${nl_escapeHtml(s.kelas || 'Umum')}
                                     </span>
                                 </div>
-                                ${s.nis ? `<p class="text-[10px] text-slate-400 mt-0.5">NIS: ${escapeHtml(s.nis)}</p>` : ''}
+                                ${s.nis ? `<p class="text-[10px] text-slate-400 mt-0.5">NIS: ${nl_escapeHtml(s.nis)}</p>` : ''}
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
-                                <button onclick="openEditStudentModal('${s.id}')" title="Edit Siswa" class="p-1 text-slate-400 hover:text-slate-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-                                <button onclick="deleteStudent('${s.id}')" title="Hapus Siswa" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="nl_openEditStudentModal('${s.id}')" title="Edit Siswa" class="p-1 text-slate-400 hover:text-slate-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="nl_deleteStudent('${s.id}')" title="Hapus Siswa" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                             </div>
                         </div>
 
@@ -577,7 +1420,7 @@
                             ${inputsHtml}
                             <div class="flex flex-col items-center gap-1 shrink-0 pl-1 border-l border-slate-200">
                                 <span class="text-[10px] font-bold text-indigo-600 uppercase">RATA</span>
-                                <span id="avg-badge-${s.id}" class="w-16 sm:w-20 py-1.5 bg-indigo-50 border border-indigo-200 rounded-xl text-xs sm:text-sm font-extrabold text-center text-indigo-700">
+                                <span id="nl-avg-badge-${s.id}" class="w-16 sm:w-20 py-1.5 bg-indigo-50 border border-indigo-200 rounded-xl text-xs sm:text-sm font-extrabold text-center text-indigo-700">
                                     ${avg}
                                 </span>
                             </div>
@@ -587,7 +1430,7 @@
             }).join('');
         }
 
-        function handleGradeKeyDown(e, studentIdx, colIdx) {
+        function nl_handleGradeKeyDown(e, studentIdx, colIdx) {
             const key = e.key;
             let targetStu = studentIdx;
             let targetCol = colIdx;
@@ -621,38 +1464,39 @@
             }
         }
 
-        async function updateGrade(studentId, colId, value) {
-            const student = students.find(s => s.id === studentId);
-            const col = gradeColumns.find(c => c.id === colId);
+        async function nl_updateGrade(studentId, colId, value) {
+            const student = nl_students.find(s => s.id === studentId);
+            const col = nl_gradeColumns.find(c => c.id === colId);
             if (!student || !col) return;
 
             if (!student.grades) student.grades = {};
             student.grades[colId] = value;
-            saveLocal();
+            nl_saveLocal();
             
             // Live recalculate student average UI
             let total = 0, count = 0;
-            gradeColumns.forEach(c => {
-                if (!hiddenColumns.has(c.title)) {
+            nl_gradeColumns.forEach(c => {
+                if (!nl_hiddenColumns.has(c.title)) {
                     const val = parseFloat(student.grades[c.id]);
                     if (!isNaN(val)) { total += val; count++; }
                 }
             });
-            const avgBadge = document.getElementById(`avg-badge-${studentId}`);
+            const avgBadge = document.getElementById(`nl-avg-badge-${studentId}`);
             if (avgBadge) {
                 avgBadge.innerText = count > 0 ? (total / count).toFixed(1) : '-';
             }
 
-            renderPills(getFilteredStudents());
+            nl_renderPills(nl_getFilteredStudents());
 
-            if (scriptUrl) {
+            if (nl_scriptUrl) {
                 try {
-                    await fetch(scriptUrl, {
+                    await fetch(nl_scriptUrl, {
                         method: 'POST',
                         mode: 'no-cors',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             action: 'updateGrade',
+                            type: 'nilai',
                             studentId: student.id,
                             nis: student.nis,
                             nama: student.nama,
@@ -666,52 +1510,52 @@
             }
         }
 
-        function toggleColumnVisibility(colTitle) {
-            if (hiddenColumns.has(colTitle)) hiddenColumns.delete(colTitle);
-            else hiddenColumns.add(colTitle);
+        function nl_toggleColumnVisibility(colTitle) {
+            if (nl_hiddenColumns.has(colTitle)) nl_hiddenColumns.delete(colTitle);
+            else nl_hiddenColumns.add(colTitle);
             // Save updated visibility preference to localStorage by Column Title
-            localStorage.setItem('input_nilai_hidden_columns', JSON.stringify(Array.from(hiddenColumns)));
-            render();
+            localStorage.setItem('input_nilai_hidden_columns', JSON.stringify(Array.from(nl_hiddenColumns)));
+            nl_render();
         }
 
-        function openCopyModal(targetColId = 'all') {
-            copyColumnFilter = targetColId || 'all';
+        function nl_openCopyModal(targetColId = 'all') {
+            nl_copyColumnFilter = targetColId || 'all';
             
-            const colSelect = document.getElementById('copy-column-select');
+            const colSelect = document.getElementById('nl-copy-column-select');
             colSelect.innerHTML = '<option value="all">Semua Judul Nilai</option>' + 
                 '<option value="avg">Rata-Rata Saja</option>' + 
-                gradeColumns.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+                nl_gradeColumns.map(c => `<option value="${c.id}">${nl_escapeHtml(c.title)}</option>`).join('');
             
-            colSelect.value = copyColumnFilter;
-            document.getElementById('copy-mode-select').value = copyMode;
+            colSelect.value = nl_copyColumnFilter;
+            document.getElementById('nl-copy-mode-select').value = nl_copyMode;
 
-            updateCopySettings();
-            document.getElementById('copy-modal').classList.remove('hidden');
+            nl_updateCopySettings();
+            document.getElementById('nl-copy-modal').classList.remove('hidden');
             lucide.createIcons();
         }
 
-        function closeCopyModal() {
-            document.getElementById('copy-modal').classList.add('hidden');
+        function nl_closeCopyModal() {
+            document.getElementById('nl-copy-modal').classList.add('hidden');
         }
 
-        function updateCopySettings() {
-            copyMode = document.getElementById('copy-mode-select').value;
-            copyColumnFilter = document.getElementById('copy-column-select').value;
+        function nl_updateCopySettings() {
+            nl_copyMode = document.getElementById('nl-copy-mode-select').value;
+            nl_copyColumnFilter = document.getElementById('nl-copy-column-select').value;
             
-            const hintText = document.getElementById('copy-hint-text');
-            if (copyMode === 'values_only') {
+            const hintText = document.getElementById('nl-copy-hint-text');
+            if (nl_copyMode === 'values_only') {
                 hintText.innerText = "💡 Mode 'Hanya Nilai': Menyalin angka nilai saja urut ke bawah, sangat pas langsung di-paste (Ctrl+V) ke tabel Excel yang sudah ada nama siswanya.";
             } else {
                 hintText.innerText = "Tekan tombol di bawah untuk menyalin langsung ke clipboard, lalu paste (Ctrl+V) di Excel/WA.";
             }
 
-            generateCopyText();
+            nl_generateCopyText();
         }
 
-        function switchCopyFormat(fmt) {
-            copyFormat = fmt;
-            const btnExcel = document.getElementById('btn-format-excel');
-            const btnWa = document.getElementById('btn-format-wa');
+        function nl_switchCopyFormat(fmt) {
+            nl_copyFormat = fmt;
+            const btnExcel = document.getElementById('nl-btn-format-excel');
+            const btnWa = document.getElementById('nl-btn-format-wa');
             if (fmt === 'excel') {
                 btnExcel.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-emerald-600 text-white border-emerald-600';
                 btnWa.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200';
@@ -719,24 +1563,24 @@
                 btnWa.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-emerald-600 text-white border-emerald-600';
                 btnExcel.className = 'flex-1 py-1.5 px-3 rounded-xl text-xs font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200';
             }
-            generateCopyText();
+            nl_generateCopyText();
         }
 
-        function generateCopyText() {
-            const list = getFilteredStudents();
-            let visibleCols = gradeColumns.filter(c => !hiddenColumns.has(c.title));
+        function nl_generateCopyText() {
+            const list = nl_getFilteredStudents();
+            let visibleCols = nl_gradeColumns.filter(c => !nl_hiddenColumns.has(c.title));
             
-            if (copyColumnFilter !== 'all' && copyColumnFilter !== 'avg') {
-                visibleCols = visibleCols.filter(c => c.id === copyColumnFilter);
+            if (nl_copyColumnFilter !== 'all' && nl_copyColumnFilter !== 'avg') {
+                visibleCols = visibleCols.filter(c => c.id === nl_copyColumnFilter);
             }
 
-            const area = document.getElementById('copy-preview-text');
+            const area = document.getElementById('nl-copy-preview-text');
 
-            if (copyFormat === 'excel') {
-                if (copyMode === 'values_only') {
+            if (nl_copyFormat === 'excel') {
+                if (nl_copyMode === 'values_only') {
                     let rows = [];
                     list.forEach(s => {
-                        if (copyColumnFilter === 'avg') {
+                        if (nl_copyColumnFilter === 'avg') {
                             let total = 0, count = 0;
                             visibleCols.forEach(c => {
                                 const val = (s.grades && s.grades[c.id] !== undefined) ? s.grades[c.id] : '';
@@ -759,11 +1603,11 @@
                     area.value = rows.join('\n');
                 } else {
                     let header = ['No', 'Kelas', 'NIS', 'Nama Siswa'];
-                    if (copyColumnFilter === 'avg') {
+                    if (nl_copyColumnFilter === 'avg') {
                         header.push('Rata-Rata');
                     } else {
                         visibleCols.forEach(c => header.push(c.title));
-                        if (copyColumnFilter === 'all') header.push('Rata-Rata');
+                        if (nl_copyColumnFilter === 'all') header.push('Rata-Rata');
                     }
 
                     let rows = [header.join('\t')];
@@ -771,7 +1615,7 @@
                         let r = [idx + 1, s.kelas || '', s.nis || '', s.nama || ''];
                         let total = 0, count = 0;
 
-                        if (copyColumnFilter === 'avg') {
+                        if (nl_copyColumnFilter === 'avg') {
                             visibleCols.forEach(c => {
                                 const val = (s.grades && s.grades[c.id] !== undefined) ? s.grades[c.id] : '';
                                 if (val !== '') {
@@ -787,7 +1631,7 @@
                                 r.push(val);
                                 if (val !== '') { total += parseFloat(val); count++; }
                             });
-                            if (copyColumnFilter === 'all') {
+                            if (nl_copyColumnFilter === 'all') {
                                 const avg = count > 0 ? (total / count).toFixed(1) : '';
                                 r.push(avg);
                             }
@@ -798,18 +1642,18 @@
                 }
             } else {
                 let lines = ['REKAP NILAI SISWA', '===================='];
-                if (copyColumnFilter === 'avg') {
+                if (nl_copyColumnFilter === 'avg') {
                     lines.push('JUDUL: Rata-Rata Nilai');
                     lines.push('--------------------');
-                } else if (copyColumnFilter !== 'all') {
-                    const selectedCol = gradeColumns.find(c => c.id === copyColumnFilter);
+                } else if (nl_copyColumnFilter !== 'all') {
+                    const selectedCol = nl_gradeColumns.find(c => c.id === nl_copyColumnFilter);
                     lines.push(`JUDUL: ${selectedCol ? selectedCol.title : ''}`);
                     lines.push('--------------------');
                 }
 
-                if (copyMode === 'values_only') {
+                if (nl_copyMode === 'values_only') {
                     list.forEach(s => {
-                        if (copyColumnFilter === 'avg') {
+                        if (nl_copyColumnFilter === 'avg') {
                             let total = 0, count = 0;
                             visibleCols.forEach(c => {
                                 const val = (s.grades && s.grades[c.id] !== undefined) ? s.grades[c.id] : '';
@@ -837,7 +1681,7 @@
                         });
                         const avg = count > 0 ? (total / count).toFixed(1) : '-';
 
-                        if (copyColumnFilter === 'avg') {
+                        if (nl_copyColumnFilter === 'avg') {
                             lines.push(`${idx + 1}. ${s.nama} (${s.kelas || ''}) => Rata-Rata: ${avg}`);
                         } else {
                             let scoresStr = visibleCols.map(c => {
@@ -858,10 +1702,10 @@
             }
         }
 
-        function execCopyText() {
-            const area = document.getElementById('copy-preview-text');
+        function nl_execCopyText() {
+            const area = document.getElementById('nl-copy-preview-text');
             if (!area.value.trim()) {
-                showToast("Tidak ada data untuk di-copy", "error");
+                nl_showToast("Tidak ada data untuk di-copy", "error");
                 return;
             }
 
@@ -870,248 +1714,252 @@
 
             try {
                 document.execCommand('copy');
-                showToast("Berhasil di-copy ke clipboard!", "success");
+                nl_showToast("Berhasil di-copy ke clipboard!", "success");
             } catch (err) {
                 navigator.clipboard.writeText(area.value).then(() => {
-                    showToast("Berhasil di-copy ke clipboard!", "success");
+                    nl_showToast("Berhasil di-copy ke clipboard!", "success");
                 }).catch(() => {
-                    showToast("Gagal menyalin data", "error");
+                    nl_showToast("Gagal menyalin data", "error");
                 });
             }
         }
 
-        function openConfigModal() { document.getElementById('config-modal').classList.remove('hidden'); }
-        function closeConfigModal() { document.getElementById('config-modal').classList.add('hidden'); }
+        function nl_openConfigModal() { document.getElementById('nl-config-modal').classList.remove('hidden'); }
+        function nl_closeConfigModal() { document.getElementById('nl-config-modal').classList.add('hidden'); }
 
-        async function saveConfig() {
-            scriptUrl = document.getElementById('script-url-input').value.trim() || DEFAULT_SCRIPT_URL;
-            localStorage.setItem('input_nilai_script_url', scriptUrl);
-            closeConfigModal();
-            if (scriptUrl) {
-                updateBadge(true, "Cloud Sync Active");
-                await fetchFromGoogleSheet();
+        async function nl_saveConfig() {
+            nl_scriptUrl = document.getElementById('nl-script-url-input').value.trim() || getSharedScriptUrl();
+            pn_scriptUrl = nl_scriptUrl;
+            setSharedScriptUrl(nl_scriptUrl);
+            const pnUrlInput = document.getElementById('pn-script-url-input');
+            if (pnUrlInput) pnUrlInput.value = nl_scriptUrl;
+
+            nl_closeConfigModal();
+            if (nl_scriptUrl) {
+                nl_updateBadge(true, "Cloud Sync Active");
+                await nl_fetchFromGoogleSheet();
             } else {
-                updateBadge(false, "Disk Mode");
+                nl_updateBadge(false, "Disk Mode");
             }
         }
 
-        async function fetchFromGoogleSheet() {
-            if (!scriptUrl) return;
+        async function nl_fetchFromGoogleSheet() {
+            if (!nl_scriptUrl) return;
             try {
-                showToast("Mengambil data dari Sheet...", "info");
-                const res = await fetch(scriptUrl);
+                nl_showToast("Mengambil data dari Sheet...", "info");
+                const res = await fetch(nl_scriptUrl + (nl_scriptUrl.includes('?') ? '&' : '?') + 'type=nilai');
                 const data = await res.json();
                 if (data && data.students && data.students.length > 0) {
-                    if (data.columns && data.columns.length > 0) gradeColumns = data.columns;
-                    students = data.students;
-                    saveLocal();
-                    populateClassDropdown();
-                    render();
-                    showToast("Data Sheet berhasil dimuat!", "success");
+                    if (data.columns && data.columns.length > 0) nl_gradeColumns = data.columns;
+                    nl_students = data.students;
+                    nl_saveLocal();
+                    nl_populateClassDropdown();
+                    nl_render();
+                    nl_showToast("Data Sheet berhasil dimuat!", "success");
                 }
             } catch (err) {
                 console.warn("Fetch from sheet failed, using local fallback", err);
             }
         }
 
-        async function syncAllToSheet() {
-            if (!scriptUrl) return;
+        async function nl_syncAllToSheet() {
+            if (!nl_scriptUrl) return;
             try {
-                await fetch(scriptUrl, {
+                await fetch(nl_scriptUrl, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'syncAll', columns: gradeColumns, students })
+                    body: JSON.stringify({ action: 'syncAll', type: 'nilai', columns: nl_gradeColumns, students: nl_students })
                 });
             } catch (e) {
                 console.error(e);
             }
         }
 
-        function populateClassDropdown() {
-            const select = document.getElementById('filter-class');
+        function nl_populateClassDropdown() {
+            const select = document.getElementById('nl-filter-class');
             const selectedVal = select.value || 'NONE';
-            const classesSet = new Set(students.map(s => s.kelas).filter(Boolean));
+            const classesSet = new Set(nl_students.map(s => s.kelas).filter(Boolean));
             select.innerHTML = '<option value="NONE">-- Pilih Kelas --</option><option value="ALL">Semua Kelas</option>' + 
-                Array.from(classesSet).sort().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+                Array.from(classesSet).sort().map(c => `<option value="${nl_escapeHtml(c)}">${nl_escapeHtml(c)}</option>`).join('');
             select.value = selectedVal;
         }
 
-        function openAddStudentModal() {
-            document.getElementById('student-modal-title').innerText = "Tambah Siswa Baru";
-            document.getElementById('edit-student-id').value = "";
-            document.getElementById('student-name-input').value = "";
-            document.getElementById('student-class-input').value = "Kelas 8D";
-            document.getElementById('student-nis-input').value = "";
-            document.getElementById('student-modal').classList.remove('hidden');
+        function nl_openAddStudentModal() {
+            document.getElementById('nl-student-modal-title').innerText = "Tambah Siswa Baru";
+            document.getElementById('nl-edit-student-id').value = "";
+            document.getElementById('nl-student-name-input').value = "";
+            document.getElementById('nl-student-class-input').value = "Kelas 8D";
+            document.getElementById('nl-student-nis-input').value = "";
+            document.getElementById('nl-student-modal').classList.remove('hidden');
         }
 
-        function openEditStudentModal(id) {
-            const student = students.find(s => s.id === id);
+        function nl_openEditStudentModal(id) {
+            const student = nl_students.find(s => s.id === id);
             if (!student) return;
 
-            document.getElementById('student-modal-title').innerText = "Edit Data Siswa";
-            document.getElementById('edit-student-id').value = student.id;
-            document.getElementById('student-name-input').value = student.nama || '';
-            document.getElementById('student-class-input').value = student.kelas || '';
-            document.getElementById('student-nis-input').value = student.nis || '';
-            document.getElementById('student-modal').classList.remove('hidden');
+            document.getElementById('nl-student-modal-title').innerText = "Edit Data Siswa";
+            document.getElementById('nl-edit-student-id').value = student.id;
+            document.getElementById('nl-student-name-input').value = student.nama || '';
+            document.getElementById('nl-student-class-input').value = student.kelas || '';
+            document.getElementById('nl-student-nis-input').value = student.nis || '';
+            document.getElementById('nl-student-modal').classList.remove('hidden');
         }
 
-        function closeStudentModal() {
-            document.getElementById('student-modal').classList.add('hidden');
+        function nl_closeStudentModal() {
+            document.getElementById('nl-student-modal').classList.add('hidden');
         }
 
-        function saveStudent() {
-            const id = document.getElementById('edit-student-id').value;
-            const nama = document.getElementById('student-name-input').value.trim();
-            const kelas = document.getElementById('student-class-input').value.trim() || 'Kelas 8D';
-            const nis = document.getElementById('student-nis-input').value.trim();
+        function nl_saveStudent() {
+            const id = document.getElementById('nl-edit-student-id').value;
+            const nama = document.getElementById('nl-student-name-input').value.trim();
+            const kelas = document.getElementById('nl-student-class-input').value.trim() || 'Kelas 8D';
+            const nis = document.getElementById('nl-student-nis-input').value.trim();
 
             if (!nama) {
-                showToast("Nama siswa wajib diisi", "error");
+                nl_showToast("Nama siswa wajib diisi", "error");
                 return;
             }
 
             if (id) {
-                const s = students.find(item => item.id === id);
+                const s = nl_students.find(item => item.id === id);
                 if (s) { s.nama = nama; s.kelas = kelas; s.nis = nis; }
             } else {
-                students.unshift({ id: 'stu_' + Date.now(), nama, kelas, nis, grades: {} });
+                nl_students.unshift({ id: 'stu_' + Date.now(), nama, kelas, nis, grades: {} });
             }
 
-            saveLocal();
-            populateClassDropdown();
-            render();
-            closeStudentModal();
-            syncAllToSheet();
-            showToast("Data siswa berhasil disimpan!", "success");
+            nl_saveLocal();
+            nl_populateClassDropdown();
+            nl_render();
+            nl_closeStudentModal();
+            nl_syncAllToSheet();
+            nl_showToast("Data siswa berhasil disimpan!", "success");
         }
 
-        function openConfirmModal(title, msg, onConfirm) {
-            document.getElementById('confirm-modal-title').innerText = title;
-            document.getElementById('confirm-modal-msg').innerText = msg;
-            pendingConfirmAction = onConfirm;
-            document.getElementById('confirm-modal').classList.remove('hidden');
+        function nl_openConfirmModal(title, msg, onConfirm) {
+            document.getElementById('nl-confirm-modal-title').innerText = title;
+            document.getElementById('nl-confirm-modal-msg').innerText = msg;
+            nl_pendingConfirmAction = onConfirm;
+            document.getElementById('nl-confirm-modal').classList.remove('hidden');
             lucide.createIcons();
         }
 
-        function closeConfirmModal() {
-            document.getElementById('confirm-modal').classList.add('hidden');
-            pendingConfirmAction = null;
+        function nl_closeConfirmModal() {
+            document.getElementById('nl-confirm-modal').classList.add('hidden');
+            nl_pendingConfirmAction = null;
         }
 
-        function executeConfirmAction() {
-            if (typeof pendingConfirmAction === 'function') {
-                pendingConfirmAction();
+        function nl_executeConfirmAction() {
+            if (typeof nl_pendingConfirmAction === 'function') {
+                nl_pendingConfirmAction();
             }
-            closeConfirmModal();
+            nl_closeConfirmModal();
         }
 
-        function deleteStudent(id) {
-            const student = students.find(s => s.id === id);
+        function nl_deleteStudent(id) {
+            const student = nl_students.find(s => s.id === id);
             const studentName = student ? student.nama : 'siswa ini';
 
-            openConfirmModal(
+            nl_openConfirmModal(
                 "Hapus Data Siswa",
                 `Apakah Anda yakin ingin menghapus data "${studentName}"? Data yang terhapus tidak dapat dikembalikan.`,
                 () => {
-                    students = students.filter(s => s.id !== id);
-                    saveLocal();
-                    populateClassDropdown();
-                    render();
-                    syncAllToSheet();
-                    showToast("Siswa berhasil dihapus", "success");
+                    nl_students = nl_students.filter(s => s.id !== id);
+                    nl_saveLocal();
+                    nl_populateClassDropdown();
+                    nl_render();
+                    nl_syncAllToSheet();
+                    nl_showToast("Siswa berhasil dihapus", "success");
                 }
             );
         }
 
-        function clearColumnGrades(colId) {
-            const col = gradeColumns.find(c => c.id === colId);
+        function nl_clearColumnGrades(colId) {
+            const col = nl_gradeColumns.find(c => c.id === colId);
             if (!col) return;
 
-            openConfirmModal(
+            nl_openConfirmModal(
                 "Kosongkan Nilai Kolom",
                 `Apakah Anda yakin ingin menghapus/mengosongkan seluruh nilai pada kolom "${col.title}"?`,
                 () => {
-                    students.forEach(s => {
+                    nl_students.forEach(s => {
                         if (s.grades && s.grades[colId] !== undefined) {
                             s.grades[colId] = '';
                         }
                     });
-                    saveLocal();
-                    render();
-                    syncAllToSheet();
-                    showToast(`Seluruh nilai kolom "${col.title}" berhasil dikosongkan`, "success");
+                    nl_saveLocal();
+                    nl_render();
+                    nl_syncAllToSheet();
+                    nl_showToast(`Seluruh nilai kolom "${col.title}" berhasil dikosongkan`, "success");
                 }
             );
         }
 
-        function openAddColumnModal() {
-            document.getElementById('column-modal-title').innerText = "Tambah Judul Nilai";
-            document.getElementById('edit-col-id').value = "";
-            document.getElementById('column-title-input').value = "";
-            document.getElementById('column-modal').classList.remove('hidden');
+        function nl_openAddColumnModal() {
+            document.getElementById('nl-column-modal-title').innerText = "Tambah Judul Nilai";
+            document.getElementById('nl-edit-col-id').value = "";
+            document.getElementById('nl-column-title-input').value = "";
+            document.getElementById('nl-column-modal').classList.remove('hidden');
         }
 
-        function openEditColumnModal(id) {
-            const col = gradeColumns.find(c => c.id === id);
+        function nl_openEditColumnModal(id) {
+            const col = nl_gradeColumns.find(c => c.id === id);
             if (!col) return;
 
-            document.getElementById('column-modal-title').innerText = "Edit Judul Nilai";
-            document.getElementById('edit-col-id').value = col.id;
-            document.getElementById('column-title-input').value = col.title;
-            document.getElementById('column-modal').classList.remove('hidden');
+            document.getElementById('nl-column-modal-title').innerText = "Edit Judul Nilai";
+            document.getElementById('nl-edit-col-id').value = col.id;
+            document.getElementById('nl-column-title-input').value = col.title;
+            document.getElementById('nl-column-modal').classList.remove('hidden');
         }
 
-        function closeColumnModal() {
-            document.getElementById('column-modal').classList.add('hidden');
+        function nl_closeColumnModal() {
+            document.getElementById('nl-column-modal').classList.add('hidden');
         }
 
-        function saveColumn() {
-            const id = document.getElementById('edit-col-id').value;
-            const title = document.getElementById('column-title-input').value.trim();
+        function nl_saveColumn() {
+            const id = document.getElementById('nl-edit-col-id').value;
+            const title = document.getElementById('nl-column-title-input').value.trim();
 
             if (!title) {
-                showToast("Judul kolom wajib diisi", "error");
+                nl_showToast("Judul kolom wajib diisi", "error");
                 return;
             }
 
             if (id) {
-                const col = gradeColumns.find(c => c.id === id);
+                const col = nl_gradeColumns.find(c => c.id === id);
                 if (col) col.title = title;
             } else {
-                gradeColumns.push({ id: 'col_' + Date.now(), title });
+                nl_gradeColumns.push({ id: 'col_' + Date.now(), title });
             }
 
-            saveLocal();
-            render();
-            closeColumnModal();
-            syncAllToSheet();
-            showToast("Judul nilai berhasil disimpan!", "success");
+            nl_saveLocal();
+            nl_render();
+            nl_closeColumnModal();
+            nl_syncAllToSheet();
+            nl_showToast("Judul nilai berhasil disimpan!", "success");
         }
 
-        function deleteColumn(id) {
-            const col = gradeColumns.find(c => c.id === id);
+        function nl_deleteColumn(id) {
+            const col = nl_gradeColumns.find(c => c.id === id);
             const colTitle = col ? col.title : 'kolom ini';
 
-            openConfirmModal(
+            nl_openConfirmModal(
                 "Hapus Judul Nilai",
                 `Apakah Anda yakin ingin menghapus kolom "${colTitle}"? Seluruh nilai di kolom ini akan hilang permanen.`,
                 () => {
-                    if (col) hiddenColumns.delete(col.title);
-                    gradeColumns = gradeColumns.filter(c => c.id !== id);
-                    localStorage.setItem('input_nilai_hidden_columns', JSON.stringify(Array.from(hiddenColumns)));
-                    saveLocal();
-                    render();
-                    syncAllToSheet();
-                    showToast("Judul nilai berhasil dihapus", "success");
+                    if (col) nl_hiddenColumns.delete(col.title);
+                    nl_gradeColumns = nl_gradeColumns.filter(c => c.id !== id);
+                    localStorage.setItem('input_nilai_hidden_columns', JSON.stringify(Array.from(nl_hiddenColumns)));
+                    nl_saveLocal();
+                    nl_render();
+                    nl_syncAllToSheet();
+                    nl_showToast("Judul nilai berhasil dihapus", "success");
                 }
             );
         }
 
-        function exportToExcel() {
-            const list = students;
+        function nl_exportToExcel() {
+            const list = nl_students;
             const exportData = list.map((s, idx) => {
                 let total = 0, count = 0;
                 const row = {
@@ -1121,7 +1969,7 @@
                     "Nama Siswa": s.nama || ""
                 };
 
-                gradeColumns.forEach(col => {
+                nl_gradeColumns.forEach(col => {
                     const val = (s.grades && s.grades[col.id] !== undefined) ? s.grades[col.id] : "";
                     row[col.title] = val;
                     if (val !== "") {
@@ -1138,19 +1986,19 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai");
             XLSX.writeFile(wb, `Rekap_Nilai_Siswa_${new Date().toISOString().slice(0,10)}.xlsx`);
-            showToast("File Excel berhasil diunduh!", "success");
+            nl_showToast("File Excel berhasil diunduh!", "success");
         }
 
-        function updateBadge(isOnline, text) {
-            const badge = document.getElementById('sync-status-badge');
+        function nl_updateBadge(isOnline, text) {
+            const badge = document.getElementById('nl-sync-status-badge');
             badge.className = isOnline ? 
                 "inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200" :
                 "inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200";
             badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span> ${text}`;
         }
 
-        function showToast(msg, type = 'info') {
-            const container = document.getElementById('toast-container');
+        function nl_showToast(msg, type = 'info') {
+            const container = document.getElementById('nl-toast-container');
             const toast = document.createElement('div');
             toast.className = `p-3 rounded-xl shadow-lg text-xs font-semibold text-white transition-all transform duration-300 translate-y-2 opacity-0 ${type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800'}`;
             toast.innerText = msg;
@@ -1159,9 +2007,18 @@
             setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 2500);
         }
 
-        function escapeHtml(str) {
+        function nl_escapeHtml(str) {
             return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
+    </script>
+
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
     </script>
 </body>
 </html>
