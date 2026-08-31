@@ -32,13 +32,10 @@
 <body class="bg-slate-100 min-h-screen text-slate-800 antialiased">
 
     <!-- =========================================================
-         SCRIPT NAVIGASI & URL BERSAMA (harus dimuat paling awal,
-         karena dipakai oleh modul Penanda & Input Nilai di bawah)
+         SCRIPT NAVIGASI & URL BERSAMA
     ========================================================== -->
     <script>
-        // URL Web App Google Apps Script TUNGGAL, dipakai bersama oleh kedua modul.
-        // Ganti nilai di bawah ini dengan URL hasil deploy Code.gs (lihat panduan di chat).
-        const SHARED_DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwqn0bmTXf6UFV4Y17iKKqlgkXBte47-blCqklSefE11UpBwf5GBhTAgAYNBlr4v6LbGA/exec';
+        const SHARED_DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVuPskyX-w79icdWen7zXcqGS0ZxxNZylU4Wi986WKjlXqUtv8IMwe-ei7GLfU4m0I3Q/exec';
 
         function getSharedScriptUrl() {
             try {
@@ -130,7 +127,7 @@
         </div>
     </div>
 
-    <!-- MODAL KONEKSI BERSAMA (dari halaman utama) -->
+    <!-- MODAL KONEKSI BERSAMA -->
     <div id="shared-config-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-[70] flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -144,7 +141,7 @@
                 <label class="block text-xs font-bold text-slate-700 mb-1">URL Web App Google Apps Script</label>
                 <input type="url" id="shared-script-url-input" placeholder="https://script.google.com/macros/s/.../exec"
                     class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-slate-500">
-                <p class="text-[10px] text-slate-400 mt-1">Satu URL ini dipakai bersama oleh modul Penanda Siswa dan Input Nilai, karena keduanya membaca/menulis ke 1 Spreadsheet yang sama (tab "Penanda" dan tab "Input Nilai").</p>
+                <p class="text-[10px] text-slate-400 mt-1">Satu URL ini dipakai bersama oleh modul Penanda Siswa dan Input Nilai.</p>
             </div>
             <div class="flex items-center justify-end gap-2 pt-2">
                 <button onclick="closeSharedConfigModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
@@ -158,14 +155,10 @@
     ========================================================== -->
     <div id="view-penanda" class="app-view min-h-screen w-full flex-col text-slate-800 relative">
 
-    <!-- SIDEBAR BACKDROP OVERLAY -->
     <div id="pn-sidebar-overlay" onclick="pn_closeSidebar()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 hidden transition-opacity duration-300 opacity-0"></div>
 
-    <!-- SIDEBAR NAVIGATION DRAWER -->
     <aside id="pn-sidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between border-r border-slate-200">
         <div class="p-5 space-y-6 overflow-y-auto custom-scrollbar">
-            
-            <!-- Sidebar Header -->
             <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-200 shrink-0">
@@ -181,7 +174,6 @@
                 </button>
             </div>
 
-            <!-- Sidebar Action Buttons -->
             <div class="space-y-2.5">
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-1">Menu Aksi Utama</span>
 
@@ -226,7 +218,6 @@
                 </button>
             </div>
 
-            <!-- Quick Sync Box in Sidebar -->
             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2">
                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Sinkronisasi</span>
                 <div class="flex items-center justify-between">
@@ -236,21 +227,16 @@
                     </button>
                 </div>
             </div>
-
         </div>
 
-        <!-- Sidebar Footer -->
         <div class="p-4 border-t border-slate-100 bg-slate-50/50">
             <p class="text-[10px] text-slate-400 text-center font-medium">Penanda Siswa &copy; 2026</p>
         </div>
     </aside>
 
-    <!-- HEADER NAVIGATION -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex items-center justify-between gap-3">
-            
             <div class="flex items-center gap-3">
-                <!-- Sidebar Toggle Button -->
                 <div class="flex items-center gap-2.5">
                     <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-200 shrink-0">
                         <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
@@ -267,7 +253,6 @@
                 </div>
             </div>
 
-            <!-- Header Quick Action Shortcut -->
             <div class="flex items-center gap-2">
                 <button onclick="showView('landing')" title="Kembali ke Menu Utama" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 shadow-xs transition-all min-h-[38px]">
                     <i data-lucide="home" class="w-4 h-4"></i>
@@ -278,13 +263,10 @@
                     <span class="hidden sm:inline">Menu Sidebar</span>
                 </button>
             </div>
-
         </div>
     </header>
 
     <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-5 space-y-3">
-
-        <!-- SEARCH & FILTER BAR -->
         <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
             <div class="flex items-center gap-2 flex-1">
                 <div class="relative flex-1">
@@ -310,9 +292,7 @@
             </div>
         </div>
 
-        <!-- LIST DAFTAR SISWA -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
-            <!-- Header Ringkasan Kolom Centang -->
             <div id="pn-summary-header" class="bg-slate-50 px-3 sm:px-4 py-2.5 border-b border-slate-200 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar flex-1">
                     <span class="text-xs font-bold text-slate-500 uppercase shrink-0">Ringkasan Centang:</span>
@@ -323,7 +303,6 @@
                 </button>
             </div>
 
-            <!-- Bar kecil saat Ringkasan Sembunyi -->
             <div id="pn-summary-hidden-bar" class="hidden bg-slate-50/70 px-3 sm:px-4 py-1.5 border-b border-slate-200 flex items-center justify-between">
                 <span class="text-[11px] font-medium text-slate-400 italic">Ringkasan centang tersembunyi</span>
                 <button type="button" onclick="pn_toggleSummaryHeader()" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
@@ -331,10 +310,8 @@
                 </button>
             </div>
 
-            <!-- List Berurutan Ke Bawah -->
             <div id="pn-student-vertical-list" class="divide-y divide-slate-100"></div>
         </div>
-
     </main>
 
     <!-- MODAL CONNECT GOOGLE SHEET -->
@@ -345,18 +322,15 @@
                     <i data-lucide="link" class="w-4 h-4 text-emerald-600"></i>
                     <span>Hubungkan ke Google Sheets</span>
                 </h3>
-                <button onclick="pn_closeConfigModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <button onclick="pn_closeConfigModal()"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
             </div>
-            
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">URL Web App Google Apps Script</label>
                     <input type="url" id="pn-script-url-input" placeholder="https://script.google.com/macros/s/.../exec" 
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500">
-                    <p class="text-[10px] text-slate-400 mt-1">Masukkan URL Web App dari Apps Script spreadsheet Anda.</p>
                 </div>
             </div>
-
             <div class="flex items-center justify-end gap-2 pt-2">
                 <button onclick="pn_closeConfigModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
                 <button onclick="pn_saveConfig()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan & Sync</button>
@@ -394,20 +368,38 @@
         </div>
     </div>
 
-    <!-- MODAL TAMBAH KOLOM -->
+    <!-- MODAL TAMBAH/EDIT KOLOM -->
     <div id="pn-column-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-slate-900 text-sm">Tambah Jenis Centang</h3>
+                <h3 id="pn-column-modal-title" class="font-bold text-slate-900 text-sm">Tambah Jenis Centang</h3>
                 <button onclick="pn_closeColumnModal()"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
             </div>
+            <input type="hidden" id="pn-edit-col-id" value="">
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Judul Kolom</label>
                 <input type="text" id="pn-column-title-input" placeholder="Contoh: Tugas 1, Lunas SPP..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
             </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="pn_closeColumnModal()" class="px-4 py-2 text-xs font-semibold text-slate-600">Batal</button>
-                <button onclick="pn_saveColumn()" class="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-xl">Tambah</button>
+                <button onclick="pn_saveColumn()" class="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-xl">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KONFIRMASI HAPUS KOLOM -->
+    <div id="pn-confirm-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-[60] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-bold text-slate-900 text-sm">Hapus Judul Centang</h3>
+            </div>
+            <p id="pn-confirm-modal-msg" class="text-xs text-slate-500"></p>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="pn_closeConfirmModal()" class="px-4 py-2 text-xs font-semibold text-slate-600">Batal</button>
+                <button id="pn-confirm-modal-btn" onclick="" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl">Hapus</button>
             </div>
         </div>
     </div>
@@ -418,13 +410,11 @@
     <script>
         let pn_scriptUrl = getSharedScriptUrl();
 
-        // Status Sembunyikan Ringkasan Permanen
         let pn_isSummaryHidden = false;
         try {
             pn_isSummaryHidden = localStorage.getItem('penanda_summary_hidden') === 'true';
         } catch (e) {}
 
-        // Status Sembunyikan Kolom Individu Permanen
         let pn_hiddenColumns = new Set();
         try {
             const savedHidden = JSON.parse(localStorage.getItem('penanda_hidden_columns') || '[]');
@@ -448,10 +438,7 @@
 
         let pn_students = [];
         try {
-            pn_students = JSON.parse(localStorage.getItem('penanda_students')) || [
-                { id: 'stu_1', kelas: 'Kelas 8D', nis: '14874 - 0126159015', nama: 'ABDULLAH ZAIN', checks: { col_1: true, col_2: false } },
-                { id: 'stu_2', kelas: 'Kelas 8D', nis: '14751 - 0125352689', nama: 'AERLANGGA FALAH PRATAMA', checks: { col_1: false, col_2: false } }
-            ];
+            pn_students = JSON.parse(localStorage.getItem('penanda_students')) || [];
         } catch (e) {
             pn_students = [];
         }
@@ -475,17 +462,11 @@
             lucide.createIcons();
         });
 
-        // --- SIDEBAR DRAWER CONTROLLER ---
         function pn_toggleSidebar() {
             const sidebar = document.getElementById('pn-sidebar');
-            const overlay = document.getElementById('pn-sidebar-overlay');
             const isClosed = sidebar.classList.contains('-translate-x-full');
-            
-            if (isClosed) {
-                pn_openSidebar();
-            } else {
-                pn_closeSidebar();
-            }
+            if (isClosed) pn_openSidebar();
+            else pn_closeSidebar();
         }
 
         function pn_openSidebar() {
@@ -493,9 +474,7 @@
             const overlay = document.getElementById('pn-sidebar-overlay');
             sidebar.classList.remove('-translate-x-full');
             overlay.classList.remove('hidden');
-            setTimeout(() => {
-                overlay.classList.remove('opacity-0');
-            }, 10);
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
             lucide.createIcons();
         }
 
@@ -504,17 +483,12 @@
             const overlay = document.getElementById('pn-sidebar-overlay');
             sidebar.classList.add('-translate-x-full');
             overlay.classList.add('opacity-0');
-            setTimeout(() => {
-                overlay.classList.add('hidden');
-            }, 300);
+            setTimeout(() => overlay.classList.add('hidden'), 300);
         }
 
-        // --- VISIBILITY & STORAGE LOGIC ---
         function pn_toggleSummaryHeader() {
             pn_isSummaryHidden = !pn_isSummaryHidden;
-            try {
-                localStorage.setItem('penanda_summary_hidden', pn_isSummaryHidden.toString());
-            } catch (e) {}
+            try { localStorage.setItem('penanda_summary_hidden', pn_isSummaryHidden.toString()); } catch (e) {}
             pn_applySummaryVisibility();
         }
 
@@ -547,10 +521,7 @@
                 if (key) pn_hiddenColumns.add(key);
             }
 
-            try {
-                localStorage.setItem('penanda_hidden_columns', JSON.stringify(Array.from(pn_hiddenColumns)));
-            } catch (e) {}
-
+            try { localStorage.setItem('penanda_hidden_columns', JSON.stringify(Array.from(pn_hiddenColumns))); } catch (e) {}
             pn_render();
         }
 
@@ -566,11 +537,8 @@
             const input = document.getElementById('pn-search-input');
             const btn = document.getElementById('pn-clear-search-btn');
             if (btn) {
-                if (input.value.trim().length > 0) {
-                    btn.classList.remove('hidden');
-                } else {
-                    btn.classList.add('hidden');
-                }
+                if (input.value.trim().length > 0) btn.classList.remove('hidden');
+                else btn.classList.add('hidden');
             }
         }
 
@@ -602,7 +570,6 @@
             });
 
             document.getElementById('pn-counter-info').innerText = `${filtered.length} Siswa`;
-
             pn_renderPills(filtered);
             pn_renderList(filtered);
             lucide.createIcons();
@@ -622,6 +589,12 @@
                         <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
                             ${count}/${filteredList.length}
                         </span>
+                        <button type="button" onclick="pn_openEditColumnModal('${col.id}')" title="Ubah Judul" class="p-0.5 text-slate-400 hover:text-slate-600">
+                            <i data-lucide="edit-2" class="w-3 h-3"></i>
+                        </button>
+                        <button type="button" onclick="pn_deleteColumn('${col.id}')" title="Hapus Judul" class="p-0.5 text-slate-400 hover:text-red-600">
+                            <i data-lucide="trash-2" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 `;
             }).join('');
@@ -636,7 +609,6 @@
                     <div class="p-8 text-center text-slate-400">
                         <i data-lucide="filter" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
                         <p class="text-xs font-semibold text-slate-500">Silakan pilih kelas terlebih dahulu</p>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Pilih salah satu kelas di menu dropdown atas untuk menampilkan daftar siswa.</p>
                     </div>
                 `;
                 return;
@@ -762,7 +734,7 @@
                 const res = await fetch(pn_scriptUrl + (pn_scriptUrl.includes('?') ? '&' : '?') + 'type=penanda');
                 const data = await res.json();
                 if (data && data.students && data.students.length > 0) {
-                    pn_columns = data.columns;
+                    pn_columns = data.columns || pn_columns;
                     pn_students = data.students;
                     pn_saveLocal();
                     pn_populateClassDropdown();
@@ -792,18 +764,86 @@
             pn_syncAllToSheet();
         }
 
-        function pn_openAddColumnModal() { document.getElementById('pn-column-modal').classList.remove('hidden'); }
-        function pn_closeColumnModal() { document.getElementById('pn-column-modal').classList.add('hidden'); }
-        
-        function pn_saveColumn() {
-            const title = document.getElementById('pn-column-title-input').value.trim();
-            if (!title) return;
+        function pn_openAddColumnModal() {
+            document.getElementById('pn-column-modal-title').innerText = "Tambah Jenis Centang";
+            document.getElementById('pn-edit-col-id').value = "";
+            document.getElementById('pn-column-title-input').value = "";
+            document.getElementById('pn-column-modal').classList.remove('hidden');
+        }
 
-            pn_columns.push({ id: 'col_' + Date.now(), title });
+        function pn_openEditColumnModal(id) {
+            const col = pn_columns.find(c => c.id === id);
+            if (!col) return;
+
+            document.getElementById('pn-column-modal-title').innerText = "Ubah Jenis Centang";
+            document.getElementById('pn-edit-col-id').value = col.id;
+            document.getElementById('pn-column-title-input').value = col.title;
+            document.getElementById('pn-column-modal').classList.remove('hidden');
+        }
+
+        function pn_closeColumnModal() { document.getElementById('pn-column-modal').classList.add('hidden'); }
+
+        function pn_saveColumn() {
+            const id = document.getElementById('pn-edit-col-id').value;
+            const title = document.getElementById('pn-column-title-input').value.trim();
+            if (!title) {
+                pn_showToast("Judul kolom wajib diisi", "error");
+                return;
+            }
+
+            if (id) {
+                const col = pn_columns.find(c => c.id === id);
+                if (col) col.title = title;
+            } else {
+                pn_columns.push({ id: 'col_' + Date.now(), title });
+            }
+
             pn_saveLocal();
             pn_render();
             pn_closeColumnModal();
             pn_syncAllToSheet();
+            pn_showToast("Judul centang berhasil disimpan!", "success");
+        }
+
+        function pn_openConfirmModal(title, message, onConfirm) {
+            document.getElementById('pn-confirm-modal-msg').innerText = message;
+            const btn = document.getElementById('pn-confirm-modal-btn');
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', () => {
+                pn_closeConfirmModal();
+                onConfirm();
+            });
+            document.getElementById('pn-confirm-modal').classList.remove('hidden');
+        }
+
+        function pn_closeConfirmModal() {
+            document.getElementById('pn-confirm-modal').classList.add('hidden');
+        }
+
+        function pn_deleteColumn(id) {
+            const col = pn_columns.find(c => c.id === id);
+            const colTitle = col ? col.title : 'kolom ini';
+
+            pn_openConfirmModal(
+                "Hapus Judul Centang",
+                `Apakah Anda yakin ingin menghapus kolom "${colTitle}"? Seluruh data centang di kolom ini akan hilang permanen.`,
+                () => {
+                    if (col) {
+                        pn_hiddenColumns.delete(col.id);
+                        pn_hiddenColumns.delete(col.title);
+                    }
+                    pn_columns = pn_columns.filter(c => c.id !== id);
+                    pn_students.forEach(s => {
+                        if (s.checks && s.checks[id] !== undefined) delete s.checks[id];
+                    });
+                    try { localStorage.setItem('penanda_hidden_columns', JSON.stringify(Array.from(pn_hiddenColumns))); } catch (e) {}
+                    pn_saveLocal();
+                    pn_render();
+                    pn_syncAllToSheet();
+                    pn_showToast("Judul centang berhasil dihapus", "success");
+                }
+            );
         }
 
         async function pn_syncAllToSheet() {
@@ -854,7 +894,6 @@
             return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
     </script>
-
     </div>
 
     <!-- =========================================================
@@ -862,11 +901,8 @@
     ========================================================== -->
     <div id="view-nilai" class="app-view min-h-screen w-full flex-col text-slate-800 relative">
 
-
-    <!-- HEADER NAVIGATION -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 shrink-0">
@@ -884,7 +920,6 @@
                 </div>
             </div>
 
-            <!-- BUTTON ACTIONS -->
             <div class="flex items-center gap-2">
                 <button onclick="showView('landing')" title="Kembali ke Menu Utama" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 shadow-xs transition-all min-h-[40px]">
                     <i data-lucide="home" class="w-4 h-4"></i>
@@ -905,8 +940,6 @@
     </header>
 
     <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-5 space-y-3">
-
-        <!-- SEARCH & FILTER BAR -->
         <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
             <div class="flex items-center gap-2 flex-1">
                 <div class="relative flex-1">
@@ -932,18 +965,14 @@
             </div>
         </div>
 
-        <!-- LIST DAFTAR NILAI SISWA -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
-            <!-- Header Ringkasan Judul Nilai & Rata-rata Kolom -->
             <div class="bg-slate-50 px-3 sm:px-4 py-2.5 border-b border-slate-200 flex items-center justify-between gap-2 overflow-x-auto custom-scrollbar">
                 <span class="text-xs font-bold text-slate-500 uppercase shrink-0">Kolom Nilai & Rata-Rata:</span>
                 <div id="nl-column-pills-container" class="flex items-center gap-1.5 shrink-0"></div>
             </div>
 
-            <!-- List Berurutan Ke Bawah -->
             <div id="nl-student-vertical-list" class="divide-y divide-slate-100"></div>
         </div>
-
     </main>
 
     <!-- MODAL COPY HASIL NILAI -->
@@ -958,7 +987,6 @@
             </div>
             
             <div class="space-y-3">
-                <!-- Option 1: Format Mode -->
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Format Output</label>
                     <div class="flex gap-2">
@@ -971,7 +999,6 @@
                     </div>
                 </div>
 
-                <!-- Option 2 & 3: Mode Isi & Filter Judul -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Isi Data yang Di-copy</label>
@@ -992,7 +1019,7 @@
 
                 <div>
                     <textarea id="nl-copy-preview-text" readonly rows="7" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none custom-scrollbar"></textarea>
-                    <p id="nl-copy-hint-text" class="text-[11px] text-slate-400 mt-1">Tekan tombol di bawah untuk menyalin ke clipboard, lalu paste (Ctrl+V) langsung di Excel/WA.</p>
+                    <p id="nl-copy-hint-text" class="text-[11px] text-slate-400 mt-1">Tekan tombol di bawah untuk menyalin ke clipboard.</p>
                 </div>
             </div>
 
@@ -1013,18 +1040,15 @@
                     <i data-lucide="link" class="w-4 h-4 text-indigo-600"></i>
                     <span>Hubungkan ke Google Sheets</span>
                 </h3>
-                <button onclick="nl_closeConfigModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <button onclick="nl_closeConfigModal()"><i data-lucide="x" class="w-4 h-4 text-slate-400"></i></button>
             </div>
-            
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">URL Web App Google Apps Script</label>
                     <input type="url" id="nl-script-url-input" placeholder="https://script.google.com/macros/s/.../exec" 
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500">
-                    <p class="text-[10px] text-slate-400 mt-1">Masukkan URL Web App Apps Script yang terhubung ke tab "Input Nilai".</p>
                 </div>
             </div>
-
             <div class="flex items-center justify-end gap-2 pt-2">
                 <button onclick="nl_closeConfigModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
                 <button onclick="nl_saveConfig()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs">Simpan & Sync</button>
@@ -1082,7 +1106,7 @@
         </div>
     </div>
 
-    <!-- MODAL KONFIRMASI (HAPUS SISWA / KOSONGKAN NILAI) -->
+    <!-- MODAL KONFIRMASI -->
     <div id="nl-confirm-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 space-y-4">
             <div class="flex items-center gap-3">
@@ -1104,15 +1128,11 @@
     <!-- TOAST CONTAINER -->
     <div id="nl-toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
 
-    <!-- SIDEBAR DRAWER (HIDE / UNHIDE MENU) -->
+    <!-- SIDEBAR DRAWER -->
     <div id="nl-sidebar-drawer" class="fixed inset-0 z-50 pointer-events-none">
-        <!-- Backdrop Overlay -->
         <div id="nl-sidebar-backdrop" onclick="nl_toggleSidebar(false)" class="absolute inset-0 bg-slate-900/40 backdrop-blur-xs opacity-0 transition-opacity duration-300 pointer-events-none"></div>
-        
-        <!-- Drawer Panel -->
         <div id="nl-sidebar-panel" class="absolute top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl border-r border-slate-200 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between p-5 pointer-events-auto">
             <div class="space-y-6">
-                <!-- Sidebar Header -->
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
@@ -1125,7 +1145,6 @@
                     </button>
                 </div>
 
-                <!-- Menu Item Groups -->
                 <div class="space-y-4">
                     <div>
                         <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Kelola Data Nilai</span>
@@ -1157,7 +1176,6 @@
                 </div>
             </div>
 
-            <!-- Footer Info -->
             <div class="pt-4 border-t border-slate-100 text-center">
                 <p class="text-[11px] text-slate-400">Aplikasi Input Nilai Siswa v2.0</p>
                 <p class="text-[10px] text-slate-300 mt-0.5">Disinkronkan ke Google Sheets</p>
@@ -1167,8 +1185,8 @@
 
     <script>
         let nl_scriptUrl = getSharedScriptUrl();
+        let nl_gradeSyncTimers = {};
         
-        // Load hidden columns by Title from localStorage so visibility preferences persist across sessions & Google Sheet syncs
         let nl_hiddenColumns = new Set(JSON.parse(localStorage.getItem('input_nilai_hidden_columns') || '[]'));
         let nl_copyFormat = 'excel';
         let nl_copyMode = 'full';
@@ -1181,11 +1199,7 @@
             { id: 'col_3', title: 'PTS' }
         ];
 
-        let nl_students = JSON.parse(localStorage.getItem('input_nilai_students')) || [
-            { id: 'stu_1', kelas: 'Kelas 8D', nis: '14874 - 0126159015', nama: 'ABDULLAH ZAIN', grades: { col_1: '85', col_2: '90', col_3: '88' } },
-            { id: 'stu_2', kelas: 'Kelas 8D', nis: '14751 - 0125352689', nama: 'AERLANGGA FALAH PRATAMA', grades: { col_1: '78', col_2: '82', col_3: '80' } },
-            { id: 'stu_3', kelas: 'Kelas 8D', nis: '14782 - 0102606954', nama: 'AHMAD NURIEL', grades: { col_1: '92', col_2: '88', col_3: '95' } }
-        ];
+        let nl_students = JSON.parse(localStorage.getItem('input_nilai_students')) || [];
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('nl-search-input').addEventListener('input', () => {
@@ -1273,7 +1287,6 @@
             const filtered = nl_getFilteredStudents();
 
             document.getElementById('nl-counter-info').innerText = `${filtered.length} Siswa`;
-
             nl_renderPills(filtered);
             nl_renderList(filtered, classVal);
             lucide.createIcons();
@@ -1295,26 +1308,25 @@
                 });
                 const avg = scoredCount > 0 ? (totalScore / scoredCount).toFixed(1) : '-';
 
-                const safeTitle = col.title.replace(/'/g, "\\'");
                 return `
                     <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold ${isHidden ? 'opacity-40 bg-slate-100 text-slate-400' : 'text-slate-700'} shadow-2xs transition-all">
-                        <button type="button" onclick="nl_toggleColumnVisibility('${safeTitle}')" title="${isHidden ? 'Tampilkan kolom ini' : 'Sembunyikan kolom ini'}" class="p-0.5 hover:text-indigo-600 focus:outline-none flex items-center shrink-0">
+                        <button type="button" onclick="nl_toggleColumnVisibility('${nl_escapeHtml(col.title)}')" title="${isHidden ? 'Tampilkan kolom ini' : 'Sembunyikan kolom ini'}" class="p-0.5 hover:text-indigo-600 focus:outline-none flex items-center shrink-0">
                             <i data-lucide="${isHidden ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i>
                         </button>
                         <span class="${isHidden ? 'line-through' : ''}">${nl_escapeHtml(col.title)}</span>
                         <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded-md text-[10px] font-bold" title="Rata-rata Nilai">
                             RATA: ${avg}
                         </span>
-                        <button onclick="nl_openCopyModal('${col.id}')" title="Copy Nilai Kolom Ini Saja" class="p-0.5 text-emerald-600 hover:text-emerald-800 focus:outline-none">
+                        <button type="button" onclick="nl_openCopyModal('${col.id}')" title="Copy Nilai Kolom Ini Saja" class="p-0.5 text-emerald-600 hover:text-emerald-800 focus:outline-none">
                             <i data-lucide="copy" class="w-3 h-3"></i>
                         </button>
-                        <button onclick="nl_clearColumnGrades('${col.id}')" title="Kosongkan Semua Nilai Kolom Ini" class="p-0.5 text-amber-600 hover:text-amber-800 focus:outline-none">
+                        <button type="button" onclick="nl_clearColumnGrades('${col.id}')" title="Kosongkan Semua Nilai Kolom Ini" class="p-0.5 text-amber-600 hover:text-amber-800 focus:outline-none">
                             <i data-lucide="eraser" class="w-3 h-3"></i>
                         </button>
-                        <button onclick="nl_openEditColumnModal('${col.id}')" title="Ubah Judul" class="p-0.5 text-slate-400 hover:text-slate-600">
+                        <button type="button" onclick="nl_openEditColumnModal('${col.id}')" title="Ubah Judul" class="p-0.5 text-slate-400 hover:text-slate-600">
                             <i data-lucide="edit-2" class="w-3 h-3"></i>
                         </button>
-                        <button onclick="nl_deleteColumn('${col.id}')" title="Hapus Judul" class="p-0.5 text-slate-400 hover:text-red-600">
+                        <button type="button" onclick="nl_deleteColumn('${col.id}')" title="Hapus Judul" class="p-0.5 text-slate-400 hover:text-red-600">
                             <i data-lucide="trash-2" class="w-3 h-3"></i>
                         </button>
                     </div>
@@ -1324,7 +1336,7 @@
             const avgPillHtml = `
                 <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 border border-indigo-200 rounded-lg text-xs font-bold text-indigo-700 shadow-2xs transition-all">
                     <span>Rata-Rata Siswa</span>
-                    <button onclick="nl_openCopyModal('avg')" title="Copy Nilai Rata-Rata Saja" class="p-0.5 text-indigo-600 hover:text-indigo-800 focus:outline-none">
+                    <button type="button" onclick="nl_openCopyModal('avg')" title="Copy Nilai Rata-Rata Saja" class="p-0.5 text-indigo-600 hover:text-indigo-800 focus:outline-none">
                         <i data-lucide="copy" class="w-3 h-3"></i>
                     </button>
                 </div>
@@ -1341,7 +1353,6 @@
                     <div class="p-8 text-center text-slate-400">
                         <i data-lucide="filter" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
                         <p class="text-xs font-semibold text-slate-500">Silakan pilih kelas terlebih dahulu</p>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Pilih salah satu kelas di menu dropdown atas untuk menginputkan nilai siswa.</p>
                     </div>
                 `;
                 return;
@@ -1380,6 +1391,7 @@
                                 onfocus="this.select()"
                                 onkeydown="nl_handleGradeKeyDown(event, ${idx}, ${cIdx})"
                                 oninput="nl_updateGrade('${s.id}', '${col.id}', this.value)"
+                                onblur="nl_flushGradeSync('${s.id}', '${col.id}', this.value)"
                                 class="w-16 sm:w-20 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-center text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
                         </div>
                     `;
@@ -1403,8 +1415,8 @@
                                 ${s.nis ? `<p class="text-[10px] text-slate-400 mt-0.5">NIS: ${nl_escapeHtml(s.nis)}</p>` : ''}
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
-                                <button onclick="nl_openEditStudentModal('${s.id}')" title="Edit Siswa" class="p-1 text-slate-400 hover:text-slate-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-                                <button onclick="nl_deleteStudent('${s.id}')" title="Hapus Siswa" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                                <button type="button" onclick="nl_openEditStudentModal('${s.id}')" title="Edit Siswa" class="p-1 text-slate-400 hover:text-slate-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                                <button type="button" onclick="nl_deleteStudent('${s.id}')" title="Hapus Siswa" class="p-1 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                             </div>
                         </div>
 
@@ -1456,7 +1468,7 @@
             }
         }
 
-        async function nl_updateGrade(studentId, colId, value) {
+        function nl_updateGrade(studentId, colId, value) {
             const student = nl_students.find(s => s.id === studentId);
             const col = nl_gradeColumns.find(c => c.id === colId);
             if (!student || !col) return;
@@ -1464,8 +1476,7 @@
             if (!student.grades) student.grades = {};
             student.grades[colId] = value;
             nl_saveLocal();
-            
-            // Live recalculate student average UI
+
             let total = 0, count = 0;
             nl_gradeColumns.forEach(c => {
                 if (!nl_hiddenColumns.has(c.title)) {
@@ -1480,32 +1491,55 @@
 
             nl_renderPills(nl_getFilteredStudents());
 
-            if (nl_scriptUrl) {
-                try {
-                    await fetch(nl_scriptUrl, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'updateGrade',
-                            type: 'nilai',
-                            studentId: student.id,
-                            nis: student.nis,
-                            nama: student.nama,
-                            columnTitle: col.title,
-                            gradeValue: value
-                        })
-                    });
-                } catch (e) {
-                    console.error("Sheet sync error:", e);
-                }
+            // Debounce: Tunggu 700ms setelah user selesai mengetik sebelum dikirim ke Google Sheets
+            const timerKey = studentId + '_' + colId;
+            if (nl_gradeSyncTimers[timerKey]) {
+                clearTimeout(nl_gradeSyncTimers[timerKey]);
+            }
+            nl_gradeSyncTimers[timerKey] = setTimeout(() => {
+                delete nl_gradeSyncTimers[timerKey];
+                nl_syncGradeToServer(studentId, colId, value);
+            }, 700);
+        }
+
+        function nl_flushGradeSync(studentId, colId, value) {
+            // Langsung kirim saat input kehilangan fokus (blur)
+            const timerKey = studentId + '_' + colId;
+            if (nl_gradeSyncTimers[timerKey]) {
+                clearTimeout(nl_gradeSyncTimers[timerKey]);
+                delete nl_gradeSyncTimers[timerKey];
+            }
+            nl_syncGradeToServer(studentId, colId, value);
+        }
+
+        async function nl_syncGradeToServer(studentId, colId, value) {
+            const student = nl_students.find(s => s.id === studentId);
+            const col = nl_gradeColumns.find(c => c.id === colId);
+            if (!student || !col || !nl_scriptUrl) return;
+
+            try {
+                await fetch(nl_scriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'updateGrade',
+                        type: 'nilai',
+                        studentId: student.id,
+                        nis: student.nis,
+                        nama: student.nama,
+                        columnTitle: col.title,
+                        gradeValue: value
+                    })
+                });
+            } catch (e) {
+                console.error("Sheet sync error:", e);
             }
         }
 
         function nl_toggleColumnVisibility(colTitle) {
             if (nl_hiddenColumns.has(colTitle)) nl_hiddenColumns.delete(colTitle);
             else nl_hiddenColumns.add(colTitle);
-            // Save updated visibility preference to localStorage by Column Title
             localStorage.setItem('input_nilai_hidden_columns', JSON.stringify(Array.from(nl_hiddenColumns)));
             nl_render();
         }
@@ -1536,9 +1570,9 @@
             
             const hintText = document.getElementById('nl-copy-hint-text');
             if (nl_copyMode === 'values_only') {
-                hintText.innerText = "💡 Mode 'Hanya Nilai': Menyalin angka nilai saja urut ke bawah, sangat pas langsung di-paste (Ctrl+V) ke tabel Excel yang sudah ada nama siswanya.";
+                hintText.innerText = "💡 Mode 'Hanya Nilai': Menyalin angka nilai saja urut ke bawah.";
             } else {
-                hintText.innerText = "Tekan tombol di bawah untuk menyalin langsung ke clipboard, lalu paste (Ctrl+V) di Excel/WA.";
+                hintText.innerText = "Tekan tombol di bawah untuk menyalin langsung ke clipboard.";
             }
 
             nl_generateCopyText();
@@ -2003,8 +2037,6 @@
             return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
     </script>
-
-
     </div>
 
     <script>
