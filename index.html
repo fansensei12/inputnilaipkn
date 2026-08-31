@@ -404,8 +404,8 @@
         </div>
     </div>
 
-    <!-- WADAH TOAST PENANDA (POSISI TERBAIK & MODERN) -->
-    <div id="pn-toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 max-w-sm w-full pointer-events-none px-4"></div>
+    <!-- WADAH POP-UP TENGAH LAYAR - MODUL PENANDA SISWA -->
+    <div id="pn-toast-container" class="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none"></div>
 
     <script>
         let pn_scriptUrl = getSharedScriptUrl();
@@ -692,7 +692,6 @@
                             isChecked: student.checks[colId]
                         })
                     });
-                    pn_showToast("Tersimpan ke Sheet 'Penanda'", "success");
                 } catch (e) {
                     console.error("Sheet Sync error:", e);
                 }
@@ -730,7 +729,7 @@
         async function pn_fetchFromGoogleSheet() {
             if (!pn_scriptUrl) return;
             try {
-                pn_showToast("Mengambil data dari Sheet...", "loading");
+                pn_showToast("Memuat Data...", "Sinkronisasi Google Sheets sedang berlangsung", "loading");
                 const res = await fetch(pn_scriptUrl + (pn_scriptUrl.includes('?') ? '&' : '?') + 'type=penanda');
                 const data = await res.json();
                 if (data && data.students && data.students.length > 0) {
@@ -739,7 +738,7 @@
                     pn_saveLocal();
                     pn_populateClassDropdown();
                     pn_render();
-                    pn_showToast("Data Sheet berhasil dimuat!", "success");
+                    pn_showToast("Data Berhasil Dimuat!", "Tabel Penanda Siswa sudah sinkron.", "success");
                 }
             } catch (err) {
                 console.warn("Fetch from sheet failed, using local fallback", err);
@@ -787,7 +786,7 @@
             const id = document.getElementById('pn-edit-col-id').value;
             const title = document.getElementById('pn-column-title-input').value.trim();
             if (!title) {
-                pn_showToast("Judul kolom wajib diisi", "error");
+                pn_showToast("Peringatan", "Judul kolom wajib diisi!", "error");
                 return;
             }
 
@@ -802,7 +801,7 @@
             pn_render();
             pn_closeColumnModal();
             pn_syncAllToSheet();
-            pn_showToast("Judul centang berhasil disimpan!", "success");
+            pn_showToast("Tersimpan!", "Judul centang berhasil diperbarui.", "success");
         }
 
         function pn_openConfirmModal(title, message, onConfirm) {
@@ -841,7 +840,7 @@
                     pn_saveLocal();
                     pn_render();
                     pn_syncAllToSheet();
-                    pn_showToast("Judul centang berhasil dihapus", "success");
+                    pn_showToast("Terhapus", "Judul centang berhasil dihapus.", "success");
                 }
             );
         }
@@ -880,46 +879,55 @@
             badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span> ${text}`;
         }
 
-        // FUNGSI TOAST NOTIFIKASI MODERN PENANDA SISWA
-        function pn_showToast(msg, type = 'info') {
+        // FUNGSI POP-UP PRO PROPOSIONAL TENGAH LAYAR
+        function pn_showToast(title, desc = '', type = 'info') {
             const container = document.getElementById('pn-toast-container');
             if (!container) return;
 
             let icon = 'info';
-            let bgColor = 'bg-slate-900/95 border-slate-700/60 text-white';
+            let iconBg = 'bg-blue-100 text-blue-600';
+            let borderStyle = 'border-slate-200';
 
             if (type === 'success') {
                 icon = 'check-circle-2';
-                bgColor = 'bg-emerald-900/95 border-emerald-500/40 text-emerald-100';
+                iconBg = 'bg-emerald-100 text-emerald-600';
+                borderStyle = 'border-emerald-200';
             } else if (type === 'error') {
                 icon = 'alert-triangle';
-                bgColor = 'bg-rose-900/95 border-rose-500/40 text-rose-100';
+                iconBg = 'bg-rose-100 text-rose-600';
+                borderStyle = 'border-rose-200';
             } else if (type === 'loading') {
                 icon = 'loader-2';
-                bgColor = 'bg-indigo-900/95 border-indigo-500/40 text-indigo-100';
+                iconBg = 'bg-indigo-100 text-indigo-600';
+                borderStyle = 'border-indigo-200';
             }
 
             const toast = document.createElement('div');
-            toast.className = `flex items-center gap-2.5 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-md text-xs font-bold transition-all duration-300 transform -translate-y-4 opacity-0 ${bgColor}`;
+            toast.className = `pointer-events-auto bg-white/95 border ${borderStyle} rounded-3xl p-6 shadow-2xl backdrop-blur-md max-w-sm w-full flex flex-col items-center text-center space-y-3 transition-all duration-300 transform scale-90 opacity-0`;
             
             toast.innerHTML = `
-                <i data-lucide="${icon}" class="w-4 h-4 shrink-0 ${type === 'loading' ? 'animate-spin' : ''}"></i>
-                <span>${msg}</span>
+                <div class="w-14 h-14 rounded-2xl ${iconBg} flex items-center justify-center shadow-inner">
+                    <i data-lucide="${icon}" class="w-7 h-7 ${type === 'loading' ? 'animate-spin' : ''}"></i>
+                </div>
+                <div class="space-y-1">
+                    <h4 class="text-base font-extrabold text-slate-900">${title}</h4>
+                    ${desc ? `<p class="text-xs text-slate-500 font-medium leading-relaxed">${desc}</p>` : ''}
+                </div>
             `;
 
             container.appendChild(toast);
             if (window.lucide) lucide.createIcons();
 
             requestAnimationFrame(() => {
-                toast.classList.remove('-translate-y-4', 'opacity-0');
-                toast.classList.add('translate-y-0', 'opacity-100');
+                toast.classList.remove('scale-90', 'opacity-0');
+                toast.classList.add('scale-100', 'opacity-100');
             });
 
             setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('-translate-y-4', 'opacity-0');
+                toast.classList.remove('scale-100', 'opacity-100');
+                toast.classList.add('scale-90', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, type === 'loading' ? 2000 : 3000);
         }
 
         function pn_escapeHtml(str) {
@@ -1157,8 +1165,8 @@
         </div>
     </div>
 
-    <!-- WADAH TOAST INPUT NILAI (POSISI TERBAIK & MODERN) -->
-    <div id="nl-toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 max-w-sm w-full pointer-events-none px-4"></div>
+    <!-- WADAH POP-UP TENGAH LAYAR - MODUL INPUT NILAI -->
+    <div id="nl-toast-container" class="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none"></div>
 
     <!-- SIDEBAR DRAWER -->
     <div id="nl-sidebar-drawer" class="fixed inset-0 z-50 pointer-events-none">
@@ -1761,7 +1769,7 @@
         function nl_execCopyText() {
             const area = document.getElementById('nl-copy-preview-text');
             if (!area.value.trim()) {
-                nl_showToast("Tidak ada data untuk di-copy", "error");
+                nl_showToast("Peringatan", "Tidak ada data untuk di-copy!", "error");
                 return;
             }
 
@@ -1770,12 +1778,12 @@
 
             try {
                 document.execCommand('copy');
-                nl_showToast("Berhasil di-copy ke clipboard!", "success");
+                nl_showToast("Tercopy!", "Data berhasil disalin ke clipboard.", "success");
             } catch (err) {
                 navigator.clipboard.writeText(area.value).then(() => {
-                    nl_showToast("Berhasil di-copy ke clipboard!", "success");
+                    nl_showToast("Tercopy!", "Data berhasil disalin ke clipboard.", "success");
                 }).catch(() => {
-                    nl_showToast("Gagal menyalin data", "error");
+                    nl_showToast("Gagal", "Tidak dapat menyalin data.", "error");
                 });
             }
         }
@@ -1802,7 +1810,7 @@
         async function nl_fetchFromGoogleSheet() {
             if (!nl_scriptUrl) return;
             try {
-                nl_showToast("Mengambil data dari Sheet...", "loading");
+                nl_showToast("Memuat Data...", "Sinkronisasi Google Sheets sedang berlangsung", "loading");
                 const res = await fetch(nl_scriptUrl + (nl_scriptUrl.includes('?') ? '&' : '?') + 'type=nilai');
                 const data = await res.json();
                 if (data && data.students && data.students.length > 0) {
@@ -1811,7 +1819,7 @@
                     nl_saveLocal();
                     nl_populateClassDropdown();
                     nl_render();
-                    nl_showToast("Data Sheet berhasil dimuat!", "success");
+                    nl_showToast("Data Berhasil Dimuat!", "Tabel Input Nilai sudah sinkron.", "success");
                 }
             } catch (err) {
                 console.warn("Fetch from sheet failed, using local fallback", err);
@@ -1873,7 +1881,7 @@
             const nis = document.getElementById('nl-student-nis-input').value.trim();
 
             if (!nama) {
-                nl_showToast("Nama siswa wajib diisi", "error");
+                nl_showToast("Peringatan", "Nama siswa wajib diisi!", "error");
                 return;
             }
 
@@ -1889,7 +1897,7 @@
             nl_render();
             nl_closeStudentModal();
             nl_syncAllToSheet();
-            nl_showToast("Data siswa berhasil disimpan!", "success");
+            nl_showToast("Tersimpan!", "Data siswa berhasil diperbarui.", "success");
         }
 
         function nl_openConfirmModal(title, msg, onConfirm) {
@@ -1925,7 +1933,7 @@
                     nl_populateClassDropdown();
                     nl_render();
                     nl_syncAllToSheet();
-                    nl_showToast("Siswa berhasil dihapus", "success");
+                    nl_showToast("Terhapus", "Siswa berhasil dihapus.", "success");
                 }
             );
         }
@@ -1946,7 +1954,7 @@
                     nl_saveLocal();
                     nl_render();
                     nl_syncAllToSheet();
-                    nl_showToast(`Seluruh nilai kolom "${col.title}" berhasil dikosongkan`, "success");
+                    nl_showToast("Dikosongkan", `Seluruh nilai kolom "${col.title}" berhasil dikosongkan.`, "success");
                 }
             );
         }
@@ -1977,7 +1985,7 @@
             const title = document.getElementById('nl-column-title-input').value.trim();
 
             if (!title) {
-                nl_showToast("Judul kolom wajib diisi", "error");
+                nl_showToast("Peringatan", "Judul kolom wajib diisi!", "error");
                 return;
             }
 
@@ -1992,7 +2000,7 @@
             nl_render();
             nl_closeColumnModal();
             nl_syncAllToSheet();
-            nl_showToast("Judul nilai berhasil disimpan!", "success");
+            nl_showToast("Tersimpan!", "Judul nilai berhasil diperbarui.", "success");
         }
 
         function nl_deleteColumn(id) {
@@ -2009,7 +2017,7 @@
                     nl_saveLocal();
                     nl_render();
                     nl_syncAllToSheet();
-                    nl_showToast("Judul nilai berhasil dihapus", "success");
+                    nl_showToast("Terhapus", "Judul nilai berhasil dihapus.", "success");
                 }
             );
         }
@@ -2042,7 +2050,7 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai");
             XLSX.writeFile(wb, `Rekap_Nilai_Siswa_${new Date().toISOString().slice(0,10)}.xlsx`);
-            nl_showToast("File Excel berhasil diunduh!", "success");
+            nl_showToast("Sukses", "File Excel berhasil diunduh!", "success");
         }
 
         function nl_updateBadge(isOnline, text) {
@@ -2053,46 +2061,55 @@
             badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span> ${text}`;
         }
 
-        // FUNGSI TOAST NOTIFIKASI MODERN INPUT NILAI
-        function nl_showToast(msg, type = 'info') {
+        // FUNGSI POP-UP PRO PROPOSIONAL TENGAH LAYAR
+        function nl_showToast(title, desc = '', type = 'info') {
             const container = document.getElementById('nl-toast-container');
             if (!container) return;
 
             let icon = 'info';
-            let bgColor = 'bg-slate-900/95 border-slate-700/60 text-white';
+            let iconBg = 'bg-blue-100 text-blue-600';
+            let borderStyle = 'border-slate-200';
 
             if (type === 'success') {
                 icon = 'check-circle-2';
-                bgColor = 'bg-emerald-900/95 border-emerald-500/40 text-emerald-100';
+                iconBg = 'bg-emerald-100 text-emerald-600';
+                borderStyle = 'border-emerald-200';
             } else if (type === 'error') {
                 icon = 'alert-triangle';
-                bgColor = 'bg-rose-900/95 border-rose-500/40 text-rose-100';
+                iconBg = 'bg-rose-100 text-rose-600';
+                borderStyle = 'border-rose-200';
             } else if (type === 'loading') {
                 icon = 'loader-2';
-                bgColor = 'bg-indigo-900/95 border-indigo-500/40 text-indigo-100';
+                iconBg = 'bg-indigo-100 text-indigo-600';
+                borderStyle = 'border-indigo-200';
             }
 
             const toast = document.createElement('div');
-            toast.className = `flex items-center gap-2.5 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-md text-xs font-bold transition-all duration-300 transform -translate-y-4 opacity-0 ${bgColor}`;
+            toast.className = `pointer-events-auto bg-white/95 border ${borderStyle} rounded-3xl p-6 shadow-2xl backdrop-blur-md max-w-sm w-full flex flex-col items-center text-center space-y-3 transition-all duration-300 transform scale-90 opacity-0`;
             
             toast.innerHTML = `
-                <i data-lucide="${icon}" class="w-4 h-4 shrink-0 ${type === 'loading' ? 'animate-spin' : ''}"></i>
-                <span>${msg}</span>
+                <div class="w-14 h-14 rounded-2xl ${iconBg} flex items-center justify-center shadow-inner">
+                    <i data-lucide="${icon}" class="w-7 h-7 ${type === 'loading' ? 'animate-spin' : ''}"></i>
+                </div>
+                <div class="space-y-1">
+                    <h4 class="text-base font-extrabold text-slate-900">${title}</h4>
+                    ${desc ? `<p class="text-xs text-slate-500 font-medium leading-relaxed">${desc}</p>` : ''}
+                </div>
             `;
 
             container.appendChild(toast);
             if (window.lucide) lucide.createIcons();
 
             requestAnimationFrame(() => {
-                toast.classList.remove('-translate-y-4', 'opacity-0');
-                toast.classList.add('translate-y-0', 'opacity-100');
+                toast.classList.remove('scale-90', 'opacity-0');
+                toast.classList.add('scale-100', 'opacity-100');
             });
 
             setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('-translate-y-4', 'opacity-0');
+                toast.classList.remove('scale-100', 'opacity-100');
+                toast.classList.add('scale-90', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, type === 'loading' ? 2000 : 3000);
         }
 
         function nl_escapeHtml(str) {
