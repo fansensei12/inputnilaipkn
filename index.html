@@ -85,7 +85,7 @@
     </script>
 
     <!-- =========================================================
-         HALAMAN UTAMA / LANDING - PILIH MODUL (3 TOMBOL)
+         HALAMAN UTAMA / LANDING - PILIH MODUL
     ========================================================== -->
     <div id="view-landing" class="app-view active min-h-screen w-full flex-col items-center justify-center p-5">
         <div class="max-w-md w-full mx-auto text-center space-y-8 py-10">
@@ -133,9 +133,8 @@
                     </div>
                     <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0"></i>
                 </button>
-            </div>
-            
-            <!-- Tombol 4: LMS Pendidikan Pancasila -->
+
+                <!-- Tombol 4: LMS Pendidikan Pancasila (Membuka Link Eksternal) -->
                 <a href="https://fansensei12.github.io/LMSpendidikanpancasila/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-rose-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-rose-300 shadow-xs transition-all text-left group">
                     <div class="w-12 h-12 shrink-0 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-200 group-hover:scale-105 transition-transform">
                         <i data-lucide="book-open" class="w-6 h-6"></i>
@@ -604,11 +603,25 @@
 
         function pn_renderPills(filteredList) {
             const container = document.getElementById('pn-column-pills-container');
-            container.innerHTML = pn_columns.map(col => {
+            container.innerHTML = pn_columns.map((col, idx) => {
                 const isHidden = pn_isColumnHidden(col);
                 const count = filteredList.reduce((acc, s) => acc + (s.checks && s.checks[col.id] ? 1 : 0), 0);
+                
+                const isFirst = idx === 0;
+                const isLast = idx === pn_columns.length - 1;
+
                 return `
                     <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold ${isHidden ? 'opacity-40 bg-slate-100 text-slate-400' : 'text-slate-700'} shadow-2xs transition-all">
+                        <!-- Tombol Geser Kolom Maju/Mundur -->
+                        <div class="flex items-center gap-0.5 border-r border-slate-200 pr-1 mr-0.5">
+                            <button type="button" onclick="pn_moveColumn(${idx}, -1)" ${isFirst ? 'disabled' : ''} title="Geser ke kiri / depan" class="p-0.5 hover:text-indigo-600 disabled:opacity-20 disabled:hover:text-slate-400 cursor-pointer disabled:cursor-not-allowed">
+                                <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button type="button" onclick="pn_moveColumn(${idx}, 1)" ${isLast ? 'disabled' : ''} title="Geser ke kanan / belakang" class="p-0.5 hover:text-indigo-600 disabled:opacity-20 disabled:hover:text-slate-400 cursor-pointer disabled:cursor-not-allowed">
+                                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+
                         <button type="button" onclick="pn_toggleColumnVisibility('${col.id}')" title="${isHidden ? 'Tampilkan centang kolom ini' : 'Sembunyikan centang kolom ini'}" class="p-0.5 hover:text-indigo-600 focus:outline-none flex items-center shrink-0">
                             <i data-lucide="${isHidden ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i>
                         </button>
@@ -625,6 +638,20 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        // FUNGSI GESER URUTAN KOLOM PENANDA
+        function pn_moveColumn(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= pn_columns.length) return;
+
+            const temp = pn_columns[index];
+            pn_columns[index] = pn_columns[targetIndex];
+            pn_columns[targetIndex] = temp;
+
+            pn_saveLocal();
+            pn_render();
+            pn_syncAllToSheet();
         }
 
         function pn_renderList(filteredList) {
@@ -906,7 +933,7 @@
             badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span> ${text}`;
         }
 
-        // FUNGSI POP-UP PRO PROPOSIONAL TENGAH LAYAR
+        // FUNGSI POP-UP TENGAH LAYAR
         function pn_showToast(title, desc = '', type = 'info') {
             const container = document.getElementById('pn-toast-container');
             if (!container) return;
@@ -1479,7 +1506,7 @@
                                         ${nl_escapeHtml(s.kelas || 'Umum')}
                                     </span>
                                 </div>
-                                ${s.nis ? `<p class="text-[10px] text-slate-400 mt-0.5">NIS: ${nl_escapeHtml(s.nis)}</p>` : ''}
+                                ${s.nis ? `<p class="text-[10px] text-slate-400 mt-0.5">NIS: ${pn_escapeHtml(s.nis)}</p>` : ''}
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
                                 <button type="button" onclick="nl_openEditStudentModal('${s.id}')" title="Edit Siswa" class="p-1 text-slate-400 hover:text-slate-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
@@ -2088,7 +2115,7 @@
             badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span> ${text}`;
         }
 
-        // FUNGSI POP-UP PRO PROPOSIONAL TENGAH LAYAR
+        // FUNGSI POP-UP TENGAH LAYAR
         function nl_showToast(title, desc = '', type = 'info') {
             const container = document.getElementById('nl-toast-container');
             if (!container) return;
