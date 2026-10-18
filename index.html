@@ -121,17 +121,17 @@
                     <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors shrink-0"></i>
                 </a>
 
-                <!-- Tombol: Absena SiDia (Membuka Link Eksternal) -->
-                <a href="https://fansensei12.github.io/Absena-SiDia/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-amber-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-amber-300 shadow-xs transition-all text-left group">
-                    <div class="w-12 h-12 shrink-0 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-200 group-hover:scale-105 transition-transform">
-                        <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+                <!-- Tombol 3: Input Nilai -->
+                <button onclick="showView('nilai')" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-indigo-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-indigo-300 shadow-xs transition-all text-left group">
+                    <div class="w-12 h-12 shrink-0 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform">
+                        <i data-lucide="calculator" class="w-6 h-6"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">Absena</h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Aplikasi absensi siswa SiDia</p>
+                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">Input Nilai</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Input dan hitung rata-rata nilai tugas/ujian siswa</p>
                     </div>
-                    <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-amber-500 transition-colors shrink-0"></i>
-                </a>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0"></i>
+                </button>
 
                 <!-- Tombol 2: Penanda Siswa -->
                 <button onclick="showView('penanda')" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-emerald-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-emerald-300 shadow-xs transition-all text-left group">
@@ -145,18 +145,6 @@
                     <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0"></i>
                 </button>
 
-                <!-- Tombol 3: Input Nilai -->
-                <button onclick="showView('nilai')" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-indigo-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-indigo-300 shadow-xs transition-all text-left group">
-                    <div class="w-12 h-12 shrink-0 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform">
-                        <i data-lucide="calculator" class="w-6 h-6"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">Input Nilai</h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Input dan hitung rata-rata nilai tugas/ujian siswa</p>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0"></i>
-                </button>
-
                 <!-- Tombol 4: LMS Pendidikan Pancasila (Membuka Link Eksternal) -->
                 <a href="https://fansensei12.github.io/LMSpendidikanpancasila/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-rose-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-rose-300 shadow-xs transition-all text-left group">
                     <div class="w-12 h-12 shrink-0 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-200 group-hover:scale-105 transition-transform">
@@ -167,6 +155,30 @@
                         <p class="text-xs text-slate-500 mt-0.5">Platform belajar & materi daring Pendidikan Pancasila</p>
                     </div>
                     <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-rose-500 transition-colors shrink-0"></i>
+                </a>
+
+                <!-- Tombol: Absena SiDia (Membuka Link Eksternal) -->
+                <a href="https://fansensei12.github.io/Absena-SiDia/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-amber-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-amber-300 shadow-xs transition-all text-left group">
+                    <div class="w-12 h-12 shrink-0 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-200 group-hover:scale-105 transition-transform">
+                        <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">Absena</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Aplikasi absensi siswa SiDia</p>
+                    </div>
+                    <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-amber-500 transition-colors shrink-0"></i>
+                </a>
+
+                <!-- Tombol: Media Ajar (Membuka Link Eksternal) -->
+                <a href="https://fansensei12.github.io/Ruang-Karakter/sumber-ajar" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-cyan-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-cyan-300 shadow-xs transition-all text-left group">
+                    <div class="w-12 h-12 shrink-0 rounded-xl bg-cyan-500 text-white flex items-center justify-center shadow-md shadow-cyan-200 group-hover:scale-105 transition-transform">
+                        <i data-lucide="library" class="w-6 h-6"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">Media Ajar</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Sumber dan media pembelajaran</p>
+                    </div>
+                    <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-cyan-500 transition-colors shrink-0"></i>
                 </a>
             </div>
 
