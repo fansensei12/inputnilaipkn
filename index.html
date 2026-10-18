@@ -37,6 +37,17 @@
     <script>
         const SHARED_DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVuPskyX-w79icdWen7zXcqGS0ZxxNZylU4Wi986WKjlXqUtv8IMwe-ei7GLfU4m0I3Q/exec';
 
+        // Urutkan siswa: per kelas (natural, mis. 8A < 8B < 8D < 10A), lalu abjad nama
+        function sortStudentsInPlace(arr) {
+            const collator = new Intl.Collator('id', { numeric: true, sensitivity: 'base' });
+            arr.sort((a, b) => {
+                const k = collator.compare(String(a.kelas || '').trim(), String(b.kelas || '').trim());
+                if (k !== 0) return k;
+                return collator.compare(String(a.nama || '').trim(), String(b.nama || '').trim());
+            });
+            return arr;
+        }
+
         function getSharedScriptUrl() {
             try {
                 return localStorage.getItem('app_script_url') || SHARED_DEFAULT_SCRIPT_URL;
@@ -108,6 +119,18 @@
                         <p class="text-xs text-slate-500 mt-0.5">Aplikasi presensi & rekapan kehadiran siswa</p>
                     </div>
                     <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors shrink-0"></i>
+                </a>
+
+                <!-- Tombol: Absena SiDia (Membuka Link Eksternal) -->
+                <a href="https://fansensei12.github.io/Absena-SiDia/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-amber-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-amber-300 shadow-xs transition-all text-left group">
+                    <div class="w-12 h-12 shrink-0 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-200 group-hover:scale-105 transition-transform">
+                        <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">Absena</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Aplikasi absensi siswa SiDia</p>
+                    </div>
+                    <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-amber-500 transition-colors shrink-0"></i>
                 </a>
 
                 <!-- Tombol 2: Penanda Siswa -->
@@ -576,6 +599,7 @@
         }
 
         function pn_render() {
+            sortStudentsInPlace(pn_students);
             const searchVal = document.getElementById('pn-search-input').value.toLowerCase().trim();
             const classVal = document.getElementById('pn-filter-class').value;
 
@@ -809,7 +833,8 @@
             if (!nama) return;
 
             const newStudent = { id: 'stu_' + Date.now(), nis, nama, kelas, checks: {} };
-            pn_students.unshift(newStudent);
+            pn_students.push(newStudent);
+            sortStudentsInPlace(pn_students);
             pn_saveLocal();
             pn_populateClassDropdown();
             pn_render();
@@ -1377,6 +1402,7 @@
         }
 
         function nl_render() {
+            sortStudentsInPlace(nl_students);
             const classVal = document.getElementById('nl-filter-class').value;
             const filtered = nl_getFilteredStudents();
 
@@ -1943,9 +1969,10 @@
                 const s = nl_students.find(item => item.id === id);
                 if (s) { s.nama = nama; s.kelas = kelas; s.nis = nis; }
             } else {
-                nl_students.unshift({ id: 'stu_' + Date.now(), nama, kelas, nis, grades: {} });
+                nl_students.push({ id: 'stu_' + Date.now(), nama, kelas, nis, grades: {} });
             }
 
+            sortStudentsInPlace(nl_students);
             nl_saveLocal();
             nl_populateClassDropdown();
             nl_render();
