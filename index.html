@@ -30,19 +30,10 @@
         .app-view { display: none; }
         .app-view.active { display: flex; }
 
-        /* ===== Animasi latar halaman utama: gelembung warna melayang ===== */
+        /* ===== Latar halaman utama: hitam-gold, jaringan & atom ===== */
         .bg-anim { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0;
-            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #fdf4ff 100%); }
-        .bg-anim .blob { position: absolute; border-radius: 9999px; filter: blur(70px); opacity: .55; will-change: transform; }
-        .bg-anim .b1 { width: 340px; height: 340px; background: #b026ff; top: -80px; left: -80px; animation: floatA 18s ease-in-out infinite; }
-        .bg-anim .b2 { width: 300px; height: 300px; background: #e6b800; top: 10%; right: -90px; animation: floatB 22s ease-in-out infinite; }
-        .bg-anim .b3 { width: 320px; height: 320px; background: #8b0000; bottom: -100px; left: 5%; opacity: .35; animation: floatC 24s ease-in-out infinite; }
-        .bg-anim .b4 { width: 280px; height: 280px; background: #4f46e5; bottom: 5%; right: -60px; animation: floatA 26s ease-in-out infinite reverse; }
-        .bg-anim .b5 { width: 240px; height: 240px; background: #10b981; top: 45%; left: 30%; opacity: .35; animation: floatB 28s ease-in-out infinite reverse; }
-        @keyframes floatA { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(60px,80px) scale(1.15); } }
-        @keyframes floatB { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-70px,60px) scale(.9); } }
-        @keyframes floatC { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(80px,-70px) scale(1.1); } }
-        @media (prefers-reduced-motion: reduce) { .bg-anim .blob { animation: none; } }
+            background: radial-gradient(ellipse at 50% 0%, #2b2109 0%, #0d0b05 55%, #000 100%); }
+        .bg-anim canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 antialiased">
@@ -116,14 +107,12 @@
     ========================================================== -->
     <div id="view-landing" class="app-view active min-h-screen w-full flex-col items-center justify-center p-5 relative">
         <!-- Latar animasi bergerak -->
-        <div class="bg-anim" aria-hidden="true">
-            <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="blob b4"></span><span class="blob b5"></span>
-        </div>
+        <div class="bg-anim" aria-hidden="true"><canvas id="bg-network"></canvas></div>
         <div class="max-w-md w-full mx-auto text-center space-y-8 py-10 relative z-10">
             <div class="space-y-2">
                 <img src="logo.png" alt="Logo" class="w-24 h-24 object-contain mx-auto">
-                <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-3">Aplikasi Data Siswa</h1>
-                <p class="text-sm text-slate-500 font-medium">Pilih modul yang ingin Anda buka. Gunakan modul di bawah sesuai kebutuhan kelas Anda.</p>
+                <h1 class="text-xl sm:text-2xl font-extrabold text-[#f5c518] mt-3 drop-shadow-[0_0_12px_rgba(245,197,24,0.35)]">Aplikasi Data Siswa</h1>
+                <p class="text-sm text-slate-300 font-medium">Pilih modul yang ingin Anda buka. Gunakan modul di bawah sesuai kebutuhan kelas Anda.</p>
             </div>
 
             <div class="space-y-3.5">
@@ -212,7 +201,7 @@
                 </a>
             </div>
 
-            <button onclick="openSharedConfigModal()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-600">
+            <button onclick="openSharedConfigModal()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-yellow-600 hover:text-yellow-400">
                 <i data-lucide="link-2" class="w-3.5 h-3.5"></i> Atur URL Google Apps Script
             </button>
         </div>
@@ -2245,6 +2234,109 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) lucide.createIcons();
         });
+    </script>
+
+    <!-- =========================================================
+         ANIMASI LATAR: JARINGAN & ATOM (HITAM - GOLD)
+    ========================================================== -->
+    <script>
+    (function () {
+        const canvas = document.getElementById('bg-network');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const landing = document.getElementById('view-landing');
+        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const GOLD = '245,197,24';
+        let W = 0, H = 0, dpr = 1, nodes = [], atoms = [], t = 0;
+
+        function resize() {
+            dpr = Math.min(window.devicePixelRatio || 1, 2);
+            W = window.innerWidth; H = window.innerHeight;
+            canvas.width = W * dpr; canvas.height = H * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            const n = Math.max(32, Math.min(80, Math.round(W * H / 17000)));
+            nodes = Array.from({ length: n }, () => ({
+                x: Math.random() * W, y: Math.random() * H,
+                vx: (Math.random() - .5) * .35, vy: (Math.random() - .5) * .35,
+                r: Math.random() * 1.6 + .8
+            }));
+            const base = Math.min(W, H);
+            atoms = [
+                { x: W * .14, y: H * .2,  size: base * .22, rot: 0,   sp: .004 },
+                { x: W * .88, y: H * .78, size: base * .28, rot: 1.2, sp: -.003 },
+                { x: W * .82, y: H * .12, size: base * .12, rot: .5,  sp: .006 }
+            ];
+        }
+
+        function drawAtom(a) {
+            const rx = a.size, ry = a.size * .36;
+            // inti bercahaya
+            const g = ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, a.size * .28);
+            g.addColorStop(0, 'rgba(255,230,120,.95)');
+            g.addColorStop(.4, 'rgba(' + GOLD + ',.45)');
+            g.addColorStop(1, 'rgba(' + GOLD + ',0)');
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(a.x, a.y, a.size * .28, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = 'rgba(255,240,170,1)';
+            ctx.beginPath(); ctx.arc(a.x, a.y, Math.max(3, a.size * .05), 0, Math.PI * 2); ctx.fill();
+            // 3 orbit + elektron
+            for (let i = 0; i < 3; i++) {
+                const rot = a.rot + i * Math.PI / 3;
+                ctx.strokeStyle = 'rgba(' + GOLD + ',.28)';
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.ellipse(a.x, a.y, rx, ry, rot, 0, Math.PI * 2); ctx.stroke();
+                const ang = t * (1.1 + i * .35) * (a.sp > 0 ? 1 : -1) + i * 2;
+                const ex = rx * Math.cos(ang), ey = ry * Math.sin(ang);
+                const px = a.x + ex * Math.cos(rot) - ey * Math.sin(rot);
+                const py = a.y + ex * Math.sin(rot) + ey * Math.cos(rot);
+                const eg = ctx.createRadialGradient(px, py, 0, px, py, 9);
+                eg.addColorStop(0, 'rgba(255,235,140,1)');
+                eg.addColorStop(1, 'rgba(' + GOLD + ',0)');
+                ctx.fillStyle = eg;
+                ctx.beginPath(); ctx.arc(px, py, 9, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+
+        function frame() {
+            requestAnimationFrame(frame);
+            if (!landing.classList.contains('active') || document.hidden) return;
+            t += .012;
+            ctx.clearRect(0, 0, W, H);
+            const maxD = Math.min(150, W * .35);
+
+            // jaringan
+            for (let i = 0; i < nodes.length; i++) {
+                const a = nodes[i];
+                if (!reduce) {
+                    a.x += a.vx; a.y += a.vy;
+                    if (a.x < 0 || a.x > W) a.vx *= -1;
+                    if (a.y < 0 || a.y > H) a.vy *= -1;
+                }
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const b = nodes[j];
+                    const dx = a.x - b.x, dy = a.y - b.y;
+                    const d = Math.sqrt(dx * dx + dy * dy);
+                    if (d < maxD) {
+                        ctx.strokeStyle = 'rgba(' + GOLD + ',' + (0.32 * (1 - d / maxD)).toFixed(3) + ')';
+                        ctx.lineWidth = .8;
+                        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+                    }
+                }
+                ctx.fillStyle = 'rgba(' + GOLD + ',.85)';
+                ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // atom
+            atoms.forEach(a => {
+                if (!reduce) a.rot += a.sp * .25;
+                drawAtom(a);
+            });
+        }
+
+        resize();
+        window.addEventListener('resize', resize);
+        requestAnimationFrame(frame);
+    })();
     </script>
 </body>
 </html>
