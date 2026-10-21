@@ -29,6 +29,20 @@
         input[type=number] { -moz-appearance: textfield; }
         .app-view { display: none; }
         .app-view.active { display: flex; }
+
+        /* ===== Animasi latar halaman utama: gelembung warna melayang ===== */
+        .bg-anim { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #fdf4ff 100%); }
+        .bg-anim .blob { position: absolute; border-radius: 9999px; filter: blur(70px); opacity: .55; will-change: transform; }
+        .bg-anim .b1 { width: 340px; height: 340px; background: #b026ff; top: -80px; left: -80px; animation: floatA 18s ease-in-out infinite; }
+        .bg-anim .b2 { width: 300px; height: 300px; background: #e6b800; top: 10%; right: -90px; animation: floatB 22s ease-in-out infinite; }
+        .bg-anim .b3 { width: 320px; height: 320px; background: #8b0000; bottom: -100px; left: 5%; opacity: .35; animation: floatC 24s ease-in-out infinite; }
+        .bg-anim .b4 { width: 280px; height: 280px; background: #4f46e5; bottom: 5%; right: -60px; animation: floatA 26s ease-in-out infinite reverse; }
+        .bg-anim .b5 { width: 240px; height: 240px; background: #10b981; top: 45%; left: 30%; opacity: .35; animation: floatB 28s ease-in-out infinite reverse; }
+        @keyframes floatA { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(60px,80px) scale(1.15); } }
+        @keyframes floatB { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-70px,60px) scale(.9); } }
+        @keyframes floatC { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(80px,-70px) scale(1.1); } }
+        @media (prefers-reduced-motion: reduce) { .bg-anim .blob { animation: none; } }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 antialiased">
@@ -100,8 +114,12 @@
     <!-- =========================================================
          HALAMAN UTAMA / LANDING - PILIH MODUL
     ========================================================== -->
-    <div id="view-landing" class="app-view active min-h-screen w-full flex-col items-center justify-center p-5">
-        <div class="max-w-md w-full mx-auto text-center space-y-8 py-10">
+    <div id="view-landing" class="app-view active min-h-screen w-full flex-col items-center justify-center p-5 relative">
+        <!-- Latar animasi bergerak -->
+        <div class="bg-anim" aria-hidden="true">
+            <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><span class="blob b4"></span><span class="blob b5"></span>
+        </div>
+        <div class="max-w-md w-full mx-auto text-center space-y-8 py-10 relative z-10">
             <div class="space-y-2">
                 <img src="logo.png" alt="Logo" class="w-24 h-24 object-contain mx-auto">
                 <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-3">Aplikasi Data Siswa</h1>
@@ -110,15 +128,15 @@
 
             <div class="space-y-3.5">
                 <!-- Tombol 1: Presenly (Membuka Link Eksternal) -->
-                <a href="https://fansensei12.github.io/presenly/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-blue-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-blue-300 shadow-xs transition-all text-left group">
-                    <div class="w-12 h-12 shrink-0 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-200 group-hover:scale-105 transition-transform">
+                <a href="https://fansensei12.github.io/presenly/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-[#b026ff]/10 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-[#b026ff]/50 shadow-xs transition-all text-left group">
+                    <div class="w-12 h-12 shrink-0 rounded-xl bg-[#b026ff] text-white flex items-center justify-center shadow-md shadow-[#b026ff]/40 group-hover:scale-105 transition-transform">
                         <i data-lucide="user-check" class="w-6 h-6"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <h2 class="font-bold text-slate-900 text-sm sm:text-base">Presenly</h2>
                         <p class="text-xs text-slate-500 mt-0.5">Aplikasi presensi & rekapan kehadiran siswa</p>
                     </div>
-                    <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors shrink-0"></i>
+                    <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-[#b026ff] transition-colors shrink-0"></i>
                 </a>
 
                 <!-- Tombol 3: Input Nilai -->
@@ -145,28 +163,28 @@
                     <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0"></i>
                 </button>
 
-                <!-- Tombol 4: LMS Pendidikan Pancasila (Membuka Link Eksternal) -->
-                <a href="https://fansensei12.github.io/LMSpendidikanpancasila/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-rose-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-rose-300 shadow-xs transition-all text-left group">
-                    <div class="w-12 h-12 shrink-0 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-200 group-hover:scale-105 transition-transform">
+                <!-- Tombol 4: LMS (Membuka Link Eksternal) -->
+                <a href="https://fansensei12.github.io/LMSpendidikanpancasila/guru" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-[#fff8dc] active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-[#e6b800] shadow-xs transition-all text-left group">
+                    <div class="w-12 h-12 shrink-0 rounded-xl bg-[#e6b800] text-white flex items-center justify-center shadow-md shadow-[#e6b800]/40 group-hover:scale-105 transition-transform">
                         <i data-lucide="book-open" class="w-6 h-6"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">LMS Pendidikan Pancasila</h2>
+                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">LMS</h2>
                         <p class="text-xs text-slate-500 mt-0.5">Platform belajar & materi daring Pendidikan Pancasila</p>
                     </div>
-                    <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-rose-500 transition-colors shrink-0"></i>
+                    <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-[#e6b800] transition-colors shrink-0"></i>
                 </a>
 
                 <!-- Tombol: Absena SiDia (Membuka Link Eksternal) -->
-                <a href="https://fansensei12.github.io/Absena-SiDia/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-amber-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-amber-300 shadow-xs transition-all text-left group">
-                    <div class="w-12 h-12 shrink-0 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-200 group-hover:scale-105 transition-transform">
+                <a href="https://fansensei12.github.io/Absena-SiDia/" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-red-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-red-800/50 shadow-xs transition-all text-left group">
+                    <div class="w-12 h-12 shrink-0 rounded-xl bg-[#8b0000] text-white flex items-center justify-center shadow-md shadow-[#8b0000]/40 group-hover:scale-105 transition-transform">
                         <i data-lucide="clipboard-check" class="w-6 h-6"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <h2 class="font-bold text-slate-900 text-sm sm:text-base">Absena</h2>
                         <p class="text-xs text-slate-500 mt-0.5">Aplikasi absensi siswa SiDia</p>
                     </div>
-                    <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-amber-500 transition-colors shrink-0"></i>
+                    <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-[#8b0000] transition-colors shrink-0"></i>
                 </a>
 
                 <!-- Tombol: Media Ajar (Membuka Link Eksternal) -->
@@ -179,6 +197,18 @@
                         <p class="text-xs text-slate-500 mt-0.5">Sumber dan media pembelajaran</p>
                     </div>
                     <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-cyan-500 transition-colors shrink-0"></i>
+                </a>
+
+                <!-- Tombol: Tracking Tugas (Membuka Link Eksternal) -->
+                <a href="https://fansensei12.github.io/Ruang-Karakter/tracking" target="_blank" rel="noopener noreferrer" class="w-full flex items-center gap-4 p-4 bg-white hover:bg-violet-50 active:scale-[0.98] rounded-2xl border border-slate-200 hover:border-violet-300 shadow-xs transition-all text-left group">
+                    <div class="w-12 h-12 shrink-0 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-md shadow-violet-200 group-hover:scale-105 transition-transform">
+                        <i data-lucide="list-checks" class="w-6 h-6"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">Tracking Tugas</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Pantau pengumpulan dan progres tugas siswa</p>
+                    </div>
+                    <i data-lucide="external-link" class="w-5 h-5 text-slate-300 group-hover:text-violet-500 transition-colors shrink-0"></i>
                 </a>
             </div>
 
