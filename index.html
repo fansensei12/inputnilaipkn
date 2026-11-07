@@ -20,6 +20,8 @@
         /* Saat di halaman utama, latar html/body ikut gelap agar tidak ada area putih di bawah / saat overscroll */
         html.landing-active, html.landing-active body { background: #000; }
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+        .nl-grade-input { touch-action: manipulation; caret-color: #4f46e5; }
+        .nl-grade-input:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,.18); }
         .menu-tile { -webkit-user-select: none; user-select: none; width: calc((100% - 3 * 0.5rem) / 4); }
         @media (min-width: 640px) { .menu-tile { width: calc((100% - 3 * 0.875rem) / 4); } }
         .custom-scrollbar::-webkit-scrollbar { height: 5px; width: 5px; }
@@ -1578,17 +1580,17 @@
 
                     return `
                         <div class="flex flex-col items-center gap-1 shrink-0">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase truncate max-w-[80px]">${nl_escapeHtml(col.title)}</span>
-                            <input type="number" min="0" max="100" step="any" 
+                            <span class="text-[10px] sm:text-xs font-bold text-slate-500 uppercase truncate max-w-[80px] sm:max-w-[112px]">${nl_escapeHtml(col.title)}</span>
+                            <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="next"
                                 value="${nl_escapeHtml(scoreVal)}" 
                                 placeholder="0" 
                                 data-stu-idx="${idx}"
                                 data-col-idx="${cIdx}"
                                 onfocus="this.select()"
                                 onkeydown="nl_handleGradeKeyDown(event, ${idx}, ${cIdx})"
-                                oninput="nl_updateGrade('${s.id}', '${col.id}', this.value)"
+                                oninput="nl_updateGrade('${s.id}', '${col.id}', nl_sanitizeGradeInput(this))"
                                 onblur="nl_flushGradeSync('${s.id}', '${col.id}', this.value)"
-                                class="w-16 sm:w-20 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-center text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                                class="nl-grade-input w-20 sm:w-28 h-14 sm:h-[72px] px-2 bg-slate-50 border-2 border-slate-300 rounded-2xl text-xl sm:text-3xl font-bold text-center text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
                         </div>
                     `;
                 }).join('');
@@ -1596,7 +1598,7 @@
                 const avg = countScore > 0 ? (totalScore / countScore).toFixed(1) : '-';
 
                 return `
-                    <div class="p-3 sm:px-4 sm:py-3.5 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="p-3 sm:px-4 sm:py-3.5 hover:bg-slate-50/80 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                         <div class="flex items-center gap-2.5 flex-1 min-w-0">
                             <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 font-bold text-xs flex items-center justify-center shrink-0">
                                 ${idx + 1}
@@ -1616,11 +1618,11 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 sm:pb-0 shrink-0">
+                        <div class="flex items-center gap-3 overflow-x-auto custom-scrollbar pb-2 lg:pb-0 shrink-0 max-w-full">
                             ${inputsHtml}
                             <div class="flex flex-col items-center gap-1 shrink-0 pl-1 border-l border-slate-200">
                                 <span class="text-[10px] font-bold text-indigo-600 uppercase">RATA</span>
-                                <span id="nl-avg-badge-${s.id}" class="w-16 sm:w-20 py-1.5 bg-indigo-50 border border-indigo-200 rounded-xl text-xs sm:text-sm font-extrabold text-center text-indigo-700">
+                                <span id="nl-avg-badge-${s.id}" class="w-20 sm:w-28 h-14 sm:h-[72px] flex items-center justify-center bg-indigo-50 border-2 border-indigo-200 rounded-2xl text-xl sm:text-3xl font-extrabold text-center text-indigo-700">
                                     ${avg}
                                 </span>
                             </div>
@@ -1628,6 +1630,15 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        // Bersihkan input (tulisan tangan/stylus): hanya angka & satu titik desimal
+        function nl_sanitizeGradeInput(el) {
+            let v = String(el.value).replace(/,/g, '.').replace(/[^0-9.]/g, '');
+            const i = v.indexOf('.');
+            if (i !== -1) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/\./g, '');
+            if (v !== el.value) el.value = v;
+            return v;
         }
 
         function nl_handleGradeKeyDown(e, studentIdx, colIdx) {
