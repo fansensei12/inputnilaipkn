@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GradeFlow Aplikasi Konversi Nilai By NOOR IRFAN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem('gf-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root{--gl1:0 0 transparent;--tg:0 0 transparent;--logo:var(--ac);--bgimg:none;--n1:var(--ink);--n2:var(--ink);--n3:var(--ink);--n4:var(--ink);--sb:296px;--row:42px;color-scheme:light dark;
+--bg:#f3f5f9;--sf:#fff;--sf2:#f7f8fc;--line:#e2e6ef;--line2:#cdd4e3;--ink:#0f172a;--ink2:#46506a;--ink3:#79839a;
+--ac:#2f5bea;--acs:#e8eeff;--onac:#fff;--ok:#0b8a5f;--oks:#e2f5ec;--bad:#c8283f;--bads:#fde8ec;--sh:0 1px 2px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.05)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#070512;--sf:#0f0b26;--sf2:#16103a;--line:#2a2068;--line2:#40359a;--ink:#f0f1ff;--ink2:#b9b6ec;--ink3:#8c87cf;--ac:#2be3ff;--acs:#06273a;--onac:#02121a;--ok:#3dffa2;--oks:#06301f;--bad:#ff4d94;--bads:#3a0a24;--sh:0 0 0 1px rgba(139,92,246,.18),0 10px 34px rgba(99,50,255,.16);--gl1:0 0 18px rgba(43,227,255,.45);--tg:0 0 10px currentColor;--logo:linear-gradient(135deg,#a855f7,#2be3ff);--bgimg:radial-gradient(ellipse 60% 40% at 15% 0%,rgba(168,85,247,.20),transparent 60%),radial-gradient(ellipse 50% 40% at 90% 95%,rgba(43,227,255,.13),transparent 60%);--n1:#2be3ff;--n2:#ff5ee0;--n3:#b6ff4d;--n4:#ffd23f;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#070512;--sf:#0f0b26;--sf2:#16103a;--line:#2a2068;--line2:#40359a;--ink:#f0f1ff;--ink2:#b9b6ec;--ink3:#8c87cf;--ac:#2be3ff;--acs:#06273a;--onac:#02121a;--ok:#3dffa2;--oks:#06301f;--bad:#ff4d94;--bads:#3a0a24;--sh:0 0 0 1px rgba(139,92,246,.18),0 10px 34px rgba(99,50,255,.16);--gl1:0 0 18px rgba(43,227,255,.45);--tg:0 0 10px currentColor;--logo:linear-gradient(135deg,#a855f7,#2be3ff);--bgimg:radial-gradient(ellipse 60% 40% at 15% 0%,rgba(168,85,247,.20),transparent 60%),radial-gradient(ellipse 50% 40% at 90% 95%,rgba(43,227,255,.13),transparent 60%);--n1:#2be3ff;--n2:#ff5ee0;--n3:#b6ff4d;--n4:#ffd23f;color-scheme:dark}
+:root[data-theme=light]{color-scheme:light}
+@media(pointer:coarse){:root{--row:48px}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:15px/1.5 'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg) var(--bgimg) fixed;color:var(--ink);-webkit-text-size-adjust:100%}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.app{display:flex;height:100dvh;overflow:hidden}
+
+/* Sidebar: laci di HP/tablet, panel yang bisa dilipat di desktop */
+.sidebar{position:fixed;inset:0 auto 0 0;width:min(340px,88vw);z-index:40;background:var(--sf);border-right:1px solid var(--line);overflow:hidden;
+transform:translateX(-100%);visibility:hidden;transition:transform .22s ease,visibility 0s .22s}
+.app.open .sidebar{transform:none;visibility:visible;transition-delay:0s}
+.sb-in{height:100%;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:22px}
+.scrim{position:fixed;inset:0;z-index:30;background:rgba(8,12,24,.5);opacity:0;pointer-events:none;transition:opacity .2s}
+.app.open .scrim{opacity:1;pointer-events:auto}
+@media(min-width:1024px){
+.sidebar{position:relative;width:var(--sb);transform:none;visibility:visible;flex:none;transition:width .22s ease}
+.app:not(.open) .sidebar{width:0;border-right-width:0;visibility:hidden;transition:width .22s ease,visibility 0s .22s}
+.sb-in{width:var(--sb)}.scrim,.close-sb{display:none}}
+
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--logo);box-shadow:var(--gl1);color:var(--onac);display:grid;place-items:center;flex:none}
+.brand b{display:block;font-size:1rem;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+.brand small{color:var(--ink3);font-size:.75rem}
+.close-sb{margin-left:auto}
+.grp{display:flex;flex-direction:column;gap:12px}
+.grp>h2{margin:0;font-size:.82rem;font-weight:700;color:var(--ink2)}
+.field label{display:block;font-size:.84rem;font-weight:600;margin-bottom:6px}
+.field small{display:block;margin-top:5px;font-size:.76rem;color:var(--ink3);line-height:1.4}
+.inp,select.inp{width:100%;height:44px;padding:0 12px;border:1px solid var(--line2);border-radius:10px;background:var(--sf);font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:.95rem}
+select.inp{font-family:inherit;font-weight:500}
+.inp:focus{outline:2px solid var(--ac);outline-offset:0;border-color:var(--ac)}
+.switch{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--sf2);cursor:pointer}
+.switch input{position:absolute;opacity:0;pointer-events:none}
+.track{flex:none;width:40px;height:24px;border-radius:99px;background:var(--line2);position:relative;transition:background .15s;margin-top:1px}
+.track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.switch input:checked+.track{background:var(--ac);box-shadow:var(--gl1)}
+.switch input:checked+.track::after{transform:translateX(16px)}
+.switch input:focus-visible+.track{outline:2px solid var(--ac);outline-offset:2px}
+.switch b{display:block;font-size:.88rem;font-weight:600}
+.switch small{display:block;font-size:.76rem;color:var(--ink3);line-height:1.4;margin-top:2px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:11px;background:var(--sf2);border:1px solid var(--line)}
+.seg label{margin:0}
+.seg input{position:absolute;opacity:0}
+.seg span{display:block;text-align:center;padding:8px 6px;border-radius:8px;font-size:.84rem;font-weight:600;color:var(--ink2);cursor:pointer}
+.seg input:checked+span{background:var(--sf);color:var(--ac);box-shadow:var(--sh)}
+.seg input:focus-visible+span{outline:2px solid var(--ac)}
+.sb-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);font-size:.78rem;color:var(--ink3)}
+
+/* Area utama */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 16px;min-height:64px;background:var(--sf);border-bottom:1px solid var(--line)}
+.topbar h1{margin:0;font-size:1.02rem;font-weight:800;letter-spacing:-.01em;line-height:1.25}
+.topbar p{margin:0;font-size:.78rem;color:var(--ink3)}
+.ttl{min-width:0;flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 14px;border-radius:10px;border:1px solid var(--line2);background:var(--sf);font-weight:600;font-size:.88rem;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
+.btn:hover{background:var(--sf2)}
+.btn.pri{background:var(--ac);border-color:var(--ac);color:var(--onac);box-shadow:var(--gl1)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.dng{color:var(--bad)}
+.btn.dng:hover{background:var(--bads);border-color:var(--bad)}
+.btn.sq{width:42px;padding:0}
+.content{flex:1;overflow:auto;padding:16px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat{background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--sh)}
+.stat span{display:block;font-size:.78rem;color:var(--ink3)}
+.stat b{font:600 1.4rem/1.3 'IBM Plex Mono',monospace}
+.stat:nth-child(1) b{color:var(--n1)}.stat:nth-child(2) b{color:var(--n2)}.stat:nth-child(3) b{color:var(--n3)}.stat:nth-child(4) b{color:var(--n4)}
+.stat b{text-shadow:var(--tg)}
+.stat.bad b{color:var(--bad)}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh)}
+.tools{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.tools h2{margin:0;font-size:1rem;font-weight:700}
+.tools p{margin:2px 0 0;font-size:.8rem;color:var(--ink3);max-width:46ch}
+.tools div.bt{display:flex;gap:8px;flex-wrap:wrap}
+table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+th{position:sticky;top:0;z-index:2;background:var(--sf2);text-align:left;font-size:.78rem;font-weight:700;color:var(--ink2);padding:10px 12px;border-bottom:1px solid var(--line2)}
+td{padding:0;height:var(--row);border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--sf2)}
+.c{text-align:center}
+col.no{width:38px}col.kl{width:62px}col.ni{width:118px}col.ha{width:118px}
+.no-n{color:var(--ink3);font-size:.82rem}
+td input{display:block;width:100%;height:var(--row);border:0;border-radius:0;background:transparent;padding:0 12px;outline:none}
+td input:focus{box-shadow:inset 0 0 0 2px var(--ac);background:var(--sf)}
+.in-kls{text-align:center;color:var(--ac);font-weight:600}
+.v-nh1.good{color:var(--ok)}.v-nh1.low{color:var(--bad)}
+.v-nh1{text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:.95rem}
+.v-nh1.low{background:var(--bads)}
+.v-nh1.good{background:var(--oks)}
+.v-nh1.err{background:var(--bads);box-shadow:inset 0 0 0 2px var(--bad)}
+.res{display:inline-block;min-width:3.4rem;padding:4px 10px;border-radius:8px;font:600 .92rem 'IBM Plex Mono',monospace;background:var(--sf2);color:var(--ink3)}
+.res.pass{background:var(--acs);color:var(--ac);text-shadow:var(--tg)}
+.res.fail,.res.err{background:var(--bads);color:var(--bad);text-shadow:var(--tg)}
+tbody tr:last-child td:first-child{border-bottom-left-radius:14px}
+tbody tr:last-child td:last-child{border-bottom-right-radius:14px}
+dialog{border:1px solid var(--line);border-radius:16px;padding:22px;max-width:min(400px,90vw);background:var(--sf);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(8,12,24,.55)}
+dialog h3{margin:0 0 8px;font-size:1.05rem}
+dialog p{margin:0 0 18px;color:var(--ink2);font-size:.9rem}
+dialog div{display:flex;justify-content:flex-end;gap:8px}
+.btn.solid-bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:60;max-width:90vw;padding:11px 16px;border-radius:11px;background:var(--ink);color:var(--bg);font-size:.88rem;font-weight:600;transition:.25s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.topbar p{display:none}.topbar h1{font-size:.9rem}.content{padding:12px}.tools{padding:12px}
+col.kl{width:52px}col.ni{width:84px}col.ha{width:84px}col.no{width:30px}th,td input{padding-left:8px;padding-right:8px}th{padding:10px 8px}.res{min-width:3rem;padding:4px 6px}}
+@media(max-width:480px){.hide-sm{display:none}.btn.pri.cp{width:42px;padding:0}}
+.ic-sun{display:none}
+:root[data-theme=dark] .ic-sun{display:block}:root[data-theme=dark] .ic-moon{display:none}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .ic-sun{display:block}:root:not([data-theme=light]) .ic-moon{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<aside class="sidebar" id="sidebar" aria-label="Pengaturan konversi">
+<div class="sb-in">
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+    <div><b>GradeFlow</b><small>ABsena SiDia V.2</small></div>
+    <button class="btn sq close-sb" id="closeSb" type="button" aria-label="Tutup pengaturan"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+
+  <div class="grp">
+    <h2>Mode konversi</h2>
+    <label class="switch">
+      <input type="checkbox" id="modeKhususCheck">
+      <span class="track" aria-hidden="true"></span>
+      <span><b>Aktifkan Mode Khusus (&lt; 80 saja)</b><small id="modeHint"></small></span>
+    </label>
+  </div>
+
+  <div class="grp">
+    <h2>Parameter nilai</h2>
+    <div class="field"><label for="targetMin">Nilai minimal baru (KKM)</label>
+      <input class="inp" id="targetMin" type="text" inputmode="decimal" autocomplete="off" value="80">
+      <small>Nilai terendah setelah konversi.</small></div>
+    <div class="field"><label id="lbl-max-rules" for="targetMax">Nilai maksimal baru kelas</label>
+      <input class="inp" id="targetMax" type="text" inputmode="decimal" autocomplete="off" value="100">
+      <small>Terisi otomatis dari nilai tertinggi, boleh diubah.</small></div>
+    <div class="field" id="panel-bonus-lulus" hidden><label for="bonusLulus">Bonus nilai lulus (&ge; 80)</label>
+      <input class="inp" id="bonusLulus" type="text" inputmode="decimal" autocomplete="off" value="5">
+      <small>Ditambahkan ke setiap nilai 80 ke atas.</small></div>
+  </div>
+
+  <div class="grp">
+    <h2>Format angka</h2>
+    <div class="field"><label>Pemisah desimal hasil</label>
+      <div class="seg" role="radiogroup" aria-label="Pemisah desimal">
+        <label><input type="radio" name="sep" value="," checked><span>Koma (85,5)</span></label>
+        <label><input type="radio" name="sep" value="."><span>Titik (85.5)</span></label>
+      </div></div>
+    <div class="field"><label for="desimal">Pembulatan hasil</label>
+      <select class="inp" id="desimal"><option value="0">Bilangan bulat</option><option value="1">1 angka desimal</option><option value="2">2 angka desimal</option></select>
+      <small>Nilai asli boleh ditulis dengan titik atau koma.</small></div>
+  </div>
+
+  <div class="sb-foot">By NOOR IRFAN</div>
+</div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<div class="main">
+  <header class="topbar">
+    <button class="btn" id="sbToggle" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Buka pengaturan">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span class="hide-sm">Pengaturan</span></button>
+    <div class="ttl"><h1>GradeFlow Aplikasi Konversi Nilai By NOOR IRFAN</h1><p>Didukung oleh ABsena SiDia V.2</p></div>
+    <button class="btn sq" id="btnTheme" type="button" aria-label="Ganti mode terang atau gelap" title="Ganti mode terang/gelap">
+      <svg class="ic-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+    <button class="btn pri cp" id="btnCopy" type="button" aria-label="Salin hasil konversi">
+      <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span class="hide-sm">Salin hasil</span></button>
+  </header>
+
+  <div class="content"><div class="wrap">
+    <section class="stats" aria-label="Ringkasan nilai">
+      <div class="stat"><span>Nilai asli tertinggi</span><b id="lbl-max-asli">-</b></div>
+      <div class="stat"><span>Nilai asli terendah</span><b id="lbl-min-asli">-</b></div>
+      <div class="stat"><span>Nilai terisi</span><b id="lbl-terisi">0</b></div>
+      <div class="stat" id="stBad"><span>Di bawah KKM</span><b id="lbl-bawah">0</b></div>
+    </section>
+
+    <section class="card">
+      <div class="tools">
+        <div><h2>Daftar nilai</h2><p>Tempel dari Excel: klik sel pertama lalu Ctrl+V. Enter atau panah bawah pindah ke baris berikutnya.</p></div>
+        <div class="bt">
+          <button class="btn" id="btnAdd" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Tambah baris</button>
+          <button class="btn dng" id="btnClear" type="button"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Kosongkan nilai</button>
+        </div>
+      </div>
+      <table id="tabelNilai">
+        <colgroup><col class="no"><col class="kl"><col><col class="ni"><col class="ha"></colgroup>
+        <thead><tr><th class="c">No</th><th class="c">Kelas</th><th>Nama lengkap siswa</th><th class="c">Nilai asli (NH 1)</th><th class="c">Nilai konversi</th></tr></thead>
+        <tbody id="bodyTabel"></tbody>
+      </table>
+    </section>
+  </div></div>
+</div>
+</div>
+
+<dialog id="confirmModal">
+  <h3>Kosongkan nilai asli?</h3>
+  <p>Seluruh nilai asli pada kolom ini akan dihapus dan tidak bisa dikembalikan.</p>
+  <div><button class="btn" id="mBatal" type="button">Batal</button><button class="btn solid-bad" id="mOk" type="button">Ya, kosongkan</button></div>
+</dialog>
+<div class="toast" id="toastBox" role="status" aria-live="polite"></div>
+
+<script>
+const TOTAL_BARIS_DEFAULT = 15;
+const $ = id => document.getElementById(id);
+const tbody = $('bodyTabel');
+const fmt = { sep: ',', dec: 0 };
+
+/* ---------- Angka: terima titik atau koma ---------- */
+function parseNum(s) {
+  s = String(s).trim().replace(',', '.');
+  if (s === '') return null;
+  if (!/^\d*\.?\d*$/.test(s) || !/\d/.test(s)) return NaN;
+  return parseFloat(s);
+}
+const bebas = n => String(+n.toFixed(2)).replace('.', fmt.sep);
+const tetap = n => n.toFixed(fmt.dec).replace('.', fmt.sep);
+function bersihkan(el) {
+  let v = el.value.replace(/[^\d.,]/g, '');
+  const i = v.search(/[.,]/);
+  if (i >= 0) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/[.,]/g, '');
+  if (v !== el.value) el.value = v;
+}
+
+/* ---------- Sidebar: hide / unhide ---------- */
+const app = $('app'), sb = $('sidebar'), tog = $('sbToggle'), mq = matchMedia('(min-width:1024px)');
+function setSidebar(open, fokus) {
+  app.classList.toggle('open', open);
+  sb.inert = !open;
+  tog.setAttribute('aria-expanded', open);
+  tog.setAttribute('aria-label', open ? 'Tutup pengaturan' : 'Buka pengaturan');
+  if (fokus) (open && !mq.matches ? $('closeSb') : tog).focus();
+}
+tog.onclick = () => setSidebar(!app.classList.contains('open'), true);
+$('closeSb').onclick = () => setSidebar(false, true);
+$('scrim').onclick = () => setSidebar(false, true);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !mq.matches && app.classList.contains('open')) setSidebar(false, true);
+});
+mq.addEventListener('change', () => setSidebar(mq.matches));
+setSidebar(mq.matches);
+
+/* ---------- Tabel ---------- */
+function buatBarisTabel(n) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="c no-n">${n}</td>
+    <td><input type="text" class="in-kls" value="7C" aria-label="Kelas baris ${n}"></td>
+    <td><input type="text" class="cell-nama" placeholder="Nama siswa" autocomplete="off" aria-label="Nama siswa baris ${n}"></td>
+    <td><input type="text" class="v-nh1" inputmode="decimal" autocomplete="off" placeholder="0–100" aria-label="Nilai asli baris ${n}"></td>
+    <td class="c"><span class="res k-nh1" data-v="-">–</span></td>`;
+  kaitkanFiturPasteExcel(tr);
+  return tr;
+}
+function tambahBaris() { tbody.appendChild(buatBarisTabel(tbody.children.length + 1)); }
+for (let i = 1; i <= TOTAL_BARIS_DEFAULT; i++) tambahBaris();
+$('btnAdd').onclick = tambahBaris;
+
+tbody.addEventListener('input', e => {
+  if (e.target.classList.contains('v-nh1')) { bersihkan(e.target); prosesUlangSemua(true); }
+});
+tbody.addEventListener('focusin', e => { if (e.target.classList.contains('v-nh1')) e.target.select(); });
+tbody.addEventListener('keydown', e => {
+  const k = e.key;
+  if (k !== 'Enter' && k !== 'ArrowDown' && k !== 'ArrowUp') return;
+  const td = e.target.closest('td'); if (!td) return;
+  e.preventDefault();
+  const idx = [...td.parentNode.children].indexOf(td);
+  let tr = k === 'ArrowUp' ? td.parentNode.previousElementSibling : td.parentNode.nextElementSibling;
+  if (!tr && k !== 'ArrowUp') { tambahBaris(); tr = tbody.lastElementChild; }
+  if (tr) tr.children[idx].querySelector('input').focus();
+});
+
+/* ---------- Perhitungan ---------- */
+function prosesUlangSemua(autoMax = true) {
+  const entries = [...tbody.rows].map(row => {
+    const inp = row.querySelector('.v-nh1'), raw = inp.value.trim();
+    let val = null, st = 'empty';
+    if (raw !== '') { const n = parseNum(raw); if (isNaN(n) || n < 0 || n > 100) st = 'err'; else { st = 'ok'; val = n; } }
+    return { inp, badge: row.querySelector('.k-nh1'), val, st };
+  });
+  const asli = entries.filter(e => e.st === 'ok').map(e => e.val);
+  const remed = asli.filter(v => v < 80), lulus = asli.filter(v => v >= 80);
+  const xMin = asli.length ? Math.min(...asli) : 0, xMax = asli.length ? Math.max(...asli) : 100;
+  $('lbl-max-asli').textContent = asli.length ? bebas(xMax) : '-';
+  $('lbl-min-asli').textContent = asli.length ? bebas(xMin) : '-';
+  $('lbl-terisi').textContent = asli.length;
+
+  const khusus = $('modeKhususCheck').checked, inMax = $('targetMax');
+  $('lbl-max-rules').textContent = khusus ? 'Nilai maksimal baru (< 80)' : 'Nilai maksimal baru kelas';
+  $('panel-bonus-lulus').hidden = !khusus;
+  $('modeHint').textContent = khusus
+    ? 'Hanya nilai di bawah 80 yang diskalakan. Nilai 80 ke atas mendapat bonus.'
+    : 'Semua nilai diskalakan ke rentang KKM sampai nilai maksimal baru.';
+  if (autoMax) {
+    if (khusus) inMax.value = bebas(lulus.length ? Math.min(...lulus) : 82);
+    else if (asli.length) inMax.value = bebas(Math.min(100, xMax + 5));
+  }
+  const yMin = parseNum($('targetMin').value) || 80;
+  let yMax = parseNum(inMax.value) || 82;
+  const bonus = parseNum($('bonusLulus').value) || 5;
+  if (yMax > 100) { yMax = 100; inMax.value = '100'; }
+  const rMin = remed.length ? Math.min(...remed) : 0, rMax = remed.length ? Math.max(...remed) : 79;
+  const p = Math.pow(10, fmt.dec);
+  let bawah = 0;
+
+  entries.forEach(({ inp, badge, val, st }) => {
+    inp.classList.toggle('err', st === 'err');
+    inp.classList.toggle('low', st === 'ok' && val < 80);
+    inp.classList.toggle('good', st === 'ok' && val >= 80);
+    inp.title = st === 'err' ? 'Nilai harus berupa angka 0–100' : '';
+    badge.title = '';
+    if (st !== 'ok') {
+      badge.className = 'res k-nh1' + (st === 'err' ? ' err' : '');
+      badge.textContent = st === 'err' ? '!' : '–';
+      badge.dataset.v = '-';
+      return;
+    }
+    let f = val;
+    if (khusus) {
+      if (val < 80) f = rMax !== rMin ? yMin + ((val - rMin) / (rMax - rMin)) * (yMax - yMin) : yMin;
+      else f = val + bonus;
+    } else {
+      f = xMax !== xMin ? yMin + ((val - xMin) / (xMax - xMin)) * (yMax - yMin) : yMin;
+    }
+    f = Math.min(100, Math.max(0, Math.round(f * p) / p));
+    const gagal = f < yMin; if (gagal) bawah++;
+    badge.className = 'res k-nh1 ' + (gagal ? 'fail' : 'pass');
+    badge.textContent = badge.dataset.v = tetap(f);
+  });
+  $('lbl-bawah').textContent = bawah;
+  $('stBad').classList.toggle('bad', bawah > 0);
+}
+
+$('modeKhususCheck').onchange = () => prosesUlangSemua(true);
+['targetMin', 'targetMax', 'bonusLulus'].forEach(id => {
+  $(id).addEventListener('input', e => { bersihkan(e.target); prosesUlangSemua(false); });
+});
+$('desimal').onchange = e => { fmt.dec = +e.target.value; prosesUlangSemua(false); };
+document.querySelectorAll('input[name=sep]').forEach(r => r.onchange = () => {
+  fmt.sep = r.value;
+  ['targetMin', 'targetMax', 'bonusLulus'].forEach(id => { const n = parseNum($(id).value); if (n !== null && !isNaN(n)) $(id).value = bebas(n); });
+  prosesUlangSemua(false);
+});
+
+/* ---------- Kosongkan ---------- */
+const dlg = $('confirmModal');
+$('btnClear').onclick = () => {
+  if (![...document.querySelectorAll('.v-nh1')].some(i => i.value.trim())) return showToast('Belum ada nilai yang perlu dikosongkan.');
+  if (dlg.showModal) dlg.showModal(); else if (confirm('Kosongkan seluruh nilai asli?')) hapusKolom();
+};
+$('mBatal').onclick = () => dlg.close();
+$('mOk').onclick = () => { dlg.close(); hapusKolom(); };
+function hapusKolom() {
+  document.querySelectorAll('.v-nh1').forEach(i => i.value = '');
+  $('targetMax').value = '100';
+  prosesUlangSemua(false);
+  showToast('Seluruh nilai asli berhasil dikosongkan.');
+}
+
+/* ---------- Tempel dari Excel ---------- */
+function kaitkanFiturPasteExcel(rowEl) {
+  rowEl.querySelectorAll('input').forEach((input, colIndex) => {
+    input.addEventListener('paste', e => {
+      e.preventDefault();
+      const teks = (e.clipboardData || window.clipboardData).getData('Text');
+      const lines = teks.split(/\r\n|\r|\n/);
+      let cur = rowEl;
+      for (const line of lines) {
+        if (line.trim() === '') continue;
+        const cols = line.split('\t');
+        if (!cur) { tambahBaris(); cur = tbody.lastElementChild; }
+        const ins = cur.querySelectorAll('input');
+        cols.forEach((c, j) => { if (ins[colIndex + j]) ins[colIndex + j].value = c.trim(); });
+        cur = cur.nextElementSibling;
+      }
+      document.querySelectorAll('.v-nh1').forEach(bersihkan);
+      prosesUlangSemua(true);
+    });
+  });
+}
+
+/* ---------- Salin hasil ---------- */
+$('btnCopy').onclick = () => {
+  let out = '';
+  [...tbody.rows].forEach(row => {
+    const nama = row.querySelector('.cell-nama').value, v = row.querySelector('.k-nh1').dataset.v;
+    if (nama.trim() !== '' || v !== '-') out += v + '\n';
+  });
+  if (!out) return showToast('Tidak ada data untuk disalin.');
+  const ok = () => showToast('Hasil konversi berhasil disalin.');
+  const cadangan = () => {
+    const t = document.createElement('textarea'); t.value = out; document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); ok(); } catch (_) { showToast('Gagal menyalin. Salin manual dari kolom hasil.'); }
+    t.remove();
+  };
+  if (navigator.clipboard) navigator.clipboard.writeText(out).then(ok, cadangan); else cadangan();
+};
+
+/* ---------- Mode terang / gelap ---------- */
+const dq = matchMedia('(prefers-color-scheme:dark)');
+$('btnTheme').onclick = () => {
+  const root = document.documentElement;
+  const gelap = root.dataset.theme ? root.dataset.theme === 'dark' : dq.matches;
+  const baru = gelap ? 'light' : 'dark';
+  root.dataset.theme = baru;
+  try { localStorage.setItem('gf-theme', baru); } catch (_) {}
+  showToast(baru === 'dark' ? 'Mode gelap neon aktif.' : 'Mode terang aktif.');
+};
+
+let tt;
+function showToast(msg) {
+  const t = $('toastBox'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 3200);
+}
+prosesUlangSemua(false);
+</script>
+</body>
+</html>
