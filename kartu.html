@@ -187,6 +187,7 @@ table.t{width:100%;border-collapse:collapse;font-size:12.5px}
       <h2>Pengaturan Cetak</h2><p class="sub">Ukuran kartu dikunci dalam milimeter.</p>
       <label class="f">Kertas<select id="kt"><option value="a4">A4 — 210 × 297 mm</option><option value="f4">F4 / Folio — 215 × 330 mm</option></select></label>
       <label class="swl"><input type="checkbox" id="lyc" checked onchange="$('ly').value=this.checked?'2':'1';rPrev()"><span class="tg"></span><span><b>Jadwal di samping kartu</b><small id="lyh"></small></span></label><input type="hidden" id="ly" value="2">
+      <label class="swl"><input type="checkbox" id="pinc" checked onchange="rPrev()"><span class="tg"></span><span><b>Tampilkan PIN</b><small>Matikan untuk ujian manual (tanpa PIN)</small></span></label>
       <div class="grid2"><label class="f">Margin (mm)<input type="number" id="mg" value="8" min="0" max="20" step=".5"></label><label class="f">Jarak (mm)<input type="number" id="gp" value="3" min="0" max="10" step=".5"></label></div>
       <label class="f">Zoom layar<select id="zm"><option value="1">100%</option><option value=".75" selected>75%</option><option value=".5">50%</option></select></label>
       <label class="f">Filter Cetak<select id="fb" onchange="fvFill()"><option value="">Semua siswa</option><option value="kelas">Per Rombel / Kelas</option><option value="sesi">Per Sesi</option><option value="ruang">Per Ruang</option></select></label>
@@ -303,14 +304,14 @@ function qrText(s,c){return c.qm=='no'?s.no:c.qm=='nisn'?s.nisn:c.qm=='url'?c.qu
 function kartu(s,i,c){const r=(a,b,cl='')=>`<tr><td>${a}</td><td>:</td><td class="${cl}">${e(b)}</td></tr>`;
 return`<div><div class="kop">${IMG.logo?`<img src="${IMG.logo}">`:'<i></i>'}<div><small>${e(c.k1)}</small><small>${e(c.k2)}</small><b>${e(c.k3)}</b><small class="al">${e(c.al)}</small></div>${IMG.logo2?`<img src="${IMG.logo2}">`:'<i></i>'}</div>
 <div class="ttl">KARTU PESERTA ${e(c.ju)} · T.A ${e(c.ta)}</div></div>
-<div class="bd"><div class="lc"><table>${r('No. Peserta',s.no,'mono nu')}${r('NISN',s.nisn,'mono')}${r('Nama',s.nama,'b')}${r('Kelas',s.kelas)}${r('Ruang / Sesi',[s.ruang,s.sesi].filter(Boolean).join(' / '))}${r('PIN',s.pin,'mono')}</table>
+<div class="bd"><div class="lc"><table>${r('No. Peserta',s.no,'mono nu')}${r('NISN',s.nisn,'mono')}${r('Nama',s.nama,'b')}${r('Kelas',s.kelas)}${r('Ruang / Sesi',[s.ruang,s.sesi].filter(Boolean).join(' / '))}${c.pin?r('PIN',s.pin,'mono'):''}</table>
 <div class="sg">${e(c.tg)}<br>${e(c.jb)},<div class="sp">${IMG.ttd?`<img class="t" src="${IMG.ttd}">`:''}${IMG.stempel?`<img class="s" src="${IMG.stempel}">`:''}</div><b>${e(c.kn)}</b>NIP. ${e(c.np)}</div></div>
 <div class="rc"><div class="fo">${s.foto?`<img src="${s.foto}">`:'FOTO<br>2 × 3'}</div>${c.qr?`<div class="qr" data-qr="${e(qrText(s,c))}"></div>`:''}</div></div>`}
 function jadwal(c){return`<div><div class="jt"><b>JADWAL PELAKSANAAN</b><small>${e(c.k3)} · T.A ${e(c.ta)}</small></div>
 <table class="jd"><tr><th>No</th><th>Hari, Tanggal</th><th>Waktu</th><th>Mata Pelajaran</th></tr>${J.map((j,i)=>`<tr><td>${i+1}</td><td>${e(j.h)}</td><td>${e(j.w)}</td><td><b>${e(j.m)}</b></td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:#94a3b8">Belum ada jadwal</td></tr>'}</table></div>
 <div class="tt"><b>Tata tertib:</b> 1. Kartu wajib dibawa saat ujian. 2. Hadir 15 menit sebelum ujian dimulai. 3. Berpakaian seragam rapi.</div>`}
 function cfg(){const f4=V('kt')=='f4',two=V('ly')=='2';return{pw:f4?215:210,ph:f4?330:297,m:+V('mg')||0,g:+V('gp')||0,two,per:two?4:8,
-  c:{k1:V('k1'),k2:V('k2'),k3:V('k3'),al:V('al'),ju:V('ju'),ta:V('ta'),tg:tglStr(),jb:V('jb2'),kn:V('kn'),np:V('np'),qr:V('qs')=='1',qm:V('qm'),qu:V('qu')}}}
+  c:{k1:V('k1'),k2:V('k2'),k3:V('k3'),al:V('al'),ju:V('ju'),ta:V('ta'),tg:tglStr(),jb:V('jb2'),kn:V('kn'),np:V('np'),qr:V('qs')=='1',pin:$('pinc').checked,qm:V('qm'),qu:V('qu')}}}
 function applyVars(k){const R=document.documentElement.style,ch=(k.ph-2*k.m-3*k.g)/4;
   R.setProperty('--pw',k.pw+'mm');R.setProperty('--ph',k.ph+'mm');R.setProperty('--m',k.m+'mm');R.setProperty('--g',k.g+'mm');R.setProperty('--z',V('zm'));
   const jf=Math.max(3.4,Math.min(5.8,((ch-19.5)/(J.length+1)-.9)/.441));R.setProperty('--jf',jf.toFixed(2)+'pt');
