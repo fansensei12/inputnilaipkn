@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistem Input & Rekap Nilai Siswa</title>
+  <title>Penilaian Profil Siswa - Mandiri, Kreativitas & Kolaboratif</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
@@ -18,12 +18,12 @@
 
   <!-- Header -->
   <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
         <h1 class="text-lg sm:text-xl font-bold flex items-center gap-2">
-          <i class="fa-solid fa-table-list"></i> Panel Input & Rekap Nilai Siswa
+          <i class="fa-solid fa-table-list"></i> Penilaian Mandiri, Kreativitas & Kolaboratif
         </h1>
-        <p class="text-xs text-indigo-200 mt-0.5">Tersinkronisasi langsung dengan Google Spreadsheet</p>
+        <p class="text-xs text-indigo-200 mt-0.5">Tersinkronisasi langsung dengan Sheet Data_Siswa</p>
       </div>
       <div class="flex items-center gap-2">
         <span id="syncStatus" class="text-xs bg-indigo-800 px-3 py-1.5 rounded-full flex items-center gap-1.5">
@@ -36,7 +36,7 @@
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 mt-6">
+  <main class="max-w-7xl mx-auto px-4 mt-6">
     
     <!-- Panel Kontrol: Pencarian, Filter Kelas & Tombol Copy -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-5">
@@ -64,18 +64,56 @@
         <!-- Tombol Copy -->
         <div class="md:col-span-4 flex flex-wrap sm:flex-nowrap gap-2">
           <button onclick="copyNames()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
-            <i class="fa-regular fa-copy"></i> Copy Nama Siswa
+            <i class="fa-regular fa-copy"></i> Copy Nama
           </button>
-          <button onclick="copyScores()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
-            <i class="fa-solid fa-clipboard-check"></i> Copy Nilai Saja
-          </button>
+
+          <!-- Dropdown Copy Nilai -->
+          <div class="relative flex-1" id="copyDropdownWrapper">
+            <button onclick="toggleCopyMenu()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
+              <i class="fa-solid fa-clipboard-check"></i> Copy Nilai <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
+            </button>
+
+            <div id="copyMenu" class="hidden absolute right-0 mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-40 text-left">
+              <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Multi Kolom</div>
+              <button onclick="copyScoreMode('three')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 flex items-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-table-columns text-emerald-600 w-4"></i>
+                <div>
+                  <div class="font-semibold">Copy Ketiga Kategori</div>
+                  <div class="text-[10px] text-slate-400">Mandiri, Kreativitas, Kolaboratif</div>
+                </div>
+              </button>
+              <button onclick="copyScoreMode('all')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 flex items-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-border-all text-indigo-600 w-4"></i>
+                <div>
+                  <div class="font-semibold">Copy Semua</div>
+                  <div class="text-[10px] text-slate-400">3 Kategori Nilai + Keterangan</div>
+                </div>
+              </button>
+
+              <div class="my-1 border-t border-slate-100"></div>
+              <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Kategori Tertentu (1 Kolom)</div>
+              
+              <button onclick="copyScoreMode('mandiri')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <span class="font-medium">Mandiri Saja</span>
+              </button>
+              <button onclick="copyScoreMode('kreativitas')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="font-medium">Kreativitas Saja</span>
+              </button>
+              <button onclick="copyScoreMode('kolaboratif')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="font-medium">Kolaboratif Saja</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Info Jumlah Data -->
       <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap justify-between items-center text-xs text-slate-500 gap-2">
         <span>Menampilkan <strong id="countShown" class="text-slate-800">0</strong> dari <strong id="countTotal" class="text-slate-800">0</strong> siswa</span>
-        <span class="text-slate-400 italic">*Fitur Copy menyalin daftar sesuai filter yang sedang tampil</span>
+        <span class="text-slate-400 italic">*Hasil copy otomatis memisahkan kolom dengan Tab (siap paste ke Excel/Sheets)</span>
       </div>
     </div>
 
@@ -85,17 +123,19 @@
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
-              <th class="py-3 px-4 font-semibold w-12 text-center">No</th>
-              <th class="py-3 px-4 font-semibold">NIS / NISN</th>
+              <th class="py-3 px-3 font-semibold w-12 text-center">No</th>
+              <th class="py-3 px-3 font-semibold">NIS / NISN</th>
               <th class="py-3 px-4 font-semibold">Nama Lengkap</th>
-              <th class="py-3 px-4 font-semibold text-center">Kelas</th>
-              <th class="py-3 px-4 font-semibold text-center w-32">Nilai</th>
-              <th class="py-3 px-4 font-semibold w-40">Keterangan</th>
+              <th class="py-3 px-3 font-semibold text-center">Kelas</th>
+              <th class="py-3 px-3 font-semibold text-center w-28">Mandiri</th>
+              <th class="py-3 px-3 font-semibold text-center w-28">Kreativitas</th>
+              <th class="py-3 px-3 font-semibold text-center w-28">Kolaboratif</th>
+              <th class="py-3 px-4 font-semibold w-36">Ket</th>
             </tr>
           </thead>
           <tbody id="tableBody" class="divide-y divide-slate-200 text-sm">
             <tr>
-              <td colspan="6" class="py-10 text-center text-slate-400">
+              <td colspan="8" class="py-10 text-center text-slate-400">
                 <i class="fa-solid fa-spinner fa-spin text-xl mb-2 text-indigo-600"></i>
                 <p>Memuat data dari Spreadsheet...</p>
               </td>
@@ -118,15 +158,37 @@
     let allData = [];
     let filteredData = [];
 
-    // Konversi nilai ke keterangan otomatis
-    function getKeterangan(nilai) {
-      if (nilai === "3") return "Sangat Bagus";
-      if (nilai === "2") return "Bagus";
-      if (nilai === "1") return "Cukup";
-      return "";
+    // Tutup dropdown jika klik di luar area menu
+    document.addEventListener('click', (e) => {
+      const wrapper = document.getElementById('copyDropdownWrapper');
+      const menu = document.getElementById('copyMenu');
+      if (wrapper && !wrapper.contains(e.target)) {
+        menu.classList.add('hidden');
+      }
+    });
+
+    function toggleCopyMenu() {
+      document.getElementById('copyMenu').classList.toggle('hidden');
     }
 
-    // Ambil data saat halaman dibuka
+    // Hitung Keterangan otomatis dari rata-rata 3 aspek nilai yang sudah diisi
+    function calculateKeterangan(m, kr, ko) {
+      const scores = [m, kr, ko].filter(v => v !== "" && v !== null && v !== undefined).map(Number);
+      if (scores.length === 0) return { text: "", level: 0 };
+      
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      if (avg >= 2.5) return { text: "Sangat Bagus", level: 3 };
+      if (avg >= 1.5) return { text: "Bagus", level: 2 };
+      return { text: "Cukup", level: 1 };
+    }
+
+    function getBadgeClass(level) {
+      if (level === 3) return "badge-3 font-semibold px-2.5 py-1 rounded-full text-xs inline-block";
+      if (level === 2) return "badge-2 font-semibold px-2.5 py-1 rounded-full text-xs inline-block";
+      if (level === 1) return "badge-1 font-semibold px-2.5 py-1 rounded-full text-xs inline-block";
+      return "text-slate-400 italic text-xs";
+    }
+
     window.onload = () => {
       fetchData();
     };
@@ -136,9 +198,7 @@
       try {
         const response = await fetch(GAS_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8'
-          },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'getData' })
         });
         const result = await response.json();
@@ -159,7 +219,6 @@
       }
     }
 
-    // Isi opsi filter kelas unik secara otomatis
     function populateKelasDropdown() {
       const kelasSelect = document.getElementById('kelasFilter');
       const currentVal = kelasSelect.value;
@@ -175,7 +234,6 @@
       kelasSelect.value = currentVal;
     }
 
-    // Filter data berdasarkan pencarian & kelas
     function filterData() {
       const query = document.getElementById('searchInput').value.toLowerCase().trim();
       const kelas = document.getElementById('kelasFilter').value;
@@ -194,89 +252,93 @@
       renderTable();
     }
 
-    // Render baris tabel
+    function buildSelectHtml(rowNumber, field, currentVal) {
+      return `
+        <select onchange="handleNilaiChange(${rowNumber}, '${field}', this.value)" 
+          class="w-22 px-2 py-1.5 text-sm font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white cursor-pointer">
+          <option value="" ${currentVal === "" ? "selected" : ""}>-</option>
+          <option value="3" ${currentVal === "3" ? "selected" : ""}>3</option>
+          <option value="2" ${currentVal === "2" ? "selected" : ""}>2</option>
+          <option value="1" ${currentVal === "1" ? "selected" : ""}>1</option>
+        </select>
+      `;
+    }
+
     function renderTable() {
       const tbody = document.getElementById('tableBody');
       if (filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">Data siswa tidak ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">Data siswa tidak ditemukan.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = filteredData.map((item, idx) => {
-        const ketText = item.ket || getKeterangan(item.nilai);
-        let badgeClass = "text-slate-400 italic";
-        if (item.nilai === "3") badgeClass = "badge-3 font-semibold px-2.5 py-1 rounded-full text-xs inline-block";
-        else if (item.nilai === "2") badgeClass = "badge-2 font-semibold px-2.5 py-1 rounded-full text-xs inline-block";
-        else if (item.nilai === "1") badgeClass = "badge-1 font-semibold px-2.5 py-1 rounded-full text-xs inline-block";
+        const calc = calculateKeterangan(item.mandiri, item.kreativitas, item.kolaboratif);
+        const ketText = item.ket || calc.text;
+        
+        let level = calc.level;
+        if (ketText === "Sangat Bagus") level = 3;
+        else if (ketText === "Bagus") level = 2;
+        else if (ketText === "Cukup") level = 1;
 
         return `
           <tr class="hover:bg-slate-50 transition">
-            <td class="py-3 px-4 text-center text-slate-500 font-medium">${item.no || (idx + 1)}</td>
-            <td class="py-3 px-4">
-              <div class="font-medium text-slate-700">${item.nis || '-'}</div>
-              <div class="text-xs text-slate-400">${item.nisn || '-'}</div>
+            <td class="py-3 px-3 text-center text-slate-500 font-medium">${item.no || (idx + 1)}</td>
+            <td class="py-3 px-3">
+              <div class="font-medium text-slate-700 text-xs">${item.nis || '-'}</div>
+              <div class="text-[11px] text-slate-400">${item.nisn || '-'}</div>
             </td>
             <td class="py-3 px-4 font-semibold text-slate-800">${item.nama}</td>
-            <td class="py-3 px-4 text-center">
+            <td class="py-3 px-3 text-center">
               <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-md border border-slate-200">${item.kelas}</span>
             </td>
-            <td class="py-3 px-4 text-center">
-              <select onchange="handleNilaiChange(${item.rowNumber}, this.value)" 
-                class="w-24 px-2 py-1.5 text-sm font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white cursor-pointer">
-                <option value="" ${item.nilai === "" ? "selected" : ""}>- Pilih -</option>
-                <option value="3" ${item.nilai === "3" ? "selected" : ""}>3</option>
-                <option value="2" ${item.nilai === "2" ? "selected" : ""}>2</option>
-                <option value="1" ${item.nilai === "1" ? "selected" : ""}>1</option>
-              </select>
-            </td>
+            <td class="py-3 px-3 text-center">${buildSelectHtml(item.rowNumber, 'mandiri', item.mandiri)}</td>
+            <td class="py-3 px-3 text-center">${buildSelectHtml(item.rowNumber, 'kreativitas', item.kreativitas)}</td>
+            <td class="py-3 px-3 text-center">${buildSelectHtml(item.rowNumber, 'kolaboratif', item.kolaboratif)}</td>
             <td class="py-3 px-4">
-              <span id="ket-${item.rowNumber}" class="${badgeClass}">${ketText || 'Belum dinilai'}</span>
+              <span id="ket-${item.rowNumber}" class="${getBadgeClass(level)}">${ketText || 'Belum dinilai'}</span>
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    // Saat dropdown nilai diubah -> Update UI instan & kirim ke Spreadsheet
-    async function handleNilaiChange(rowNumber, newNilai) {
-      const newKet = getKeterangan(newNilai);
-      
-      // Update state lokal
+    async function handleNilaiChange(rowNumber, field, newVal) {
       const targetIndex = allData.findIndex(d => d.rowNumber === rowNumber);
-      if (targetIndex !== -1) {
-        allData[targetIndex].nilai = newNilai;
-        allData[targetIndex].ket = newKet;
-      }
+      if (targetIndex === -1) return;
 
-      // Update tampilan kolom Keterangan secara instan
+      allData[targetIndex][field] = newVal;
+
+      const m = allData[targetIndex].mandiri;
+      const kr = allData[targetIndex].kreativitas;
+      const ko = allData[targetIndex].kolaboratif;
+
+      const calc = calculateKeterangan(m, kr, ko);
+      allData[targetIndex].ket = calc.text;
+
       const ketEl = document.getElementById(`ket-${rowNumber}`);
       if (ketEl) {
-        ketEl.textContent = newKet || 'Belum dinilai';
-        ketEl.className = newNilai === "3" ? "badge-3 font-semibold px-2.5 py-1 rounded-full text-xs inline-block" :
-                          newNilai === "2" ? "badge-2 font-semibold px-2.5 py-1 rounded-full text-xs inline-block" :
-                          newNilai === "1" ? "badge-1 font-semibold px-2.5 py-1 rounded-full text-xs inline-block" :
-                          "text-slate-400 italic";
+        ketEl.textContent = calc.text || 'Belum dinilai';
+        ketEl.className = getBadgeClass(calc.level);
       }
 
-      // Sinkronisasi ke Google Sheets di latar belakang
       setSyncStatus('loading', 'Menyimpan...');
       try {
         const res = await fetch(GAS_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8'
-          },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
             action: 'updateNilai',
             rowNumber: rowNumber,
-            nilai: newNilai,
-            ket: newKet
+            mandiri: m,
+            kreativitas: kr,
+            kolaboratif: ko,
+            ket: calc.text
           })
         });
         const result = await res.json();
         if (result.status === 'success') {
           setSyncStatus('success', 'Tersimpan');
-          showToast(`Nilai (${newNilai || 'Kosong'}) & Ket (${newKet || '-'}) tersimpan!`);
+          showToast(`Tersimpan! Ket: ${calc.text || 'Kosong'}`);
         } else {
           setSyncStatus('error', 'Gagal simpan');
           showToast('Gagal menyimpan ke Spreadsheet', true);
@@ -287,7 +349,7 @@
       }
     }
 
-    // Copy Nama Siswa saja (sesuai hasil filter)
+    // Copy Nama Siswa saja
     function copyNames() {
       if (filteredData.length === 0) return showToast('Tidak ada data untuk disalin', true);
       const textToCopy = filteredData.map(item => item.nama).join('\n');
@@ -296,16 +358,41 @@
       });
     }
 
-    // Copy Nilai saja (sesuai hasil filter)
-    function copyScores() {
+    // Copy Nilai berdasarkan mode yang dipilih
+    function copyScoreMode(mode) {
+      document.getElementById('copyMenu').classList.add('hidden');
       if (filteredData.length === 0) return showToast('Tidak ada data untuk disalin', true);
-      const textToCopy = filteredData.map(item => item.nilai || '').join('\n');
+
+      let textToCopy = '';
+      let label = '';
+
+      if (mode === 'three') {
+        textToCopy = filteredData.map(item => 
+          `${item.mandiri || ''}\t${item.kreativitas || ''}\t${item.kolaboratif || ''}`
+        ).join('\n');
+        label = 'Ketiga Kategori (Mandiri, Kreativitas, Kolaboratif)';
+      } else if (mode === 'all') {
+        textToCopy = filteredData.map(item => {
+          const ket = item.ket || calculateKeterangan(item.mandiri, item.kreativitas, item.kolaboratif).text || '';
+          return `${item.mandiri || ''}\t${item.kreativitas || ''}\t${item.kolaboratif || ''}\t${ket}`;
+        }).join('\n');
+        label = 'Semua (3 Nilai + Keterangan)';
+      } else if (mode === 'mandiri') {
+        textToCopy = filteredData.map(item => item.mandiri || '').join('\n');
+        label = 'Nilai Mandiri';
+      } else if (mode === 'kreativitas') {
+        textToCopy = filteredData.map(item => item.kreativitas || '').join('\n');
+        label = 'Nilai Kreativitas';
+      } else if (mode === 'kolaboratif') {
+        textToCopy = filteredData.map(item => item.kolaboratif || '').join('\n');
+        label = 'Nilai Kolaboratif';
+      }
+
       navigator.clipboard.writeText(textToCopy).then(() => {
-        showToast(`${filteredData.length} Baris Nilai berhasil disalin!`);
+        showToast(`${filteredData.length} baris ${label} berhasil disalin!`);
       });
     }
 
-    // Indikator status sinkronisasi
     function setSyncStatus(state, text) {
       const el = document.getElementById('syncStatus');
       if (state === 'loading') {
@@ -317,7 +404,6 @@
       }
     }
 
-    // Pop-up Toast notifikasi
     function showToast(msg, isError = false) {
       const toast = document.getElementById('toast');
       const icon = document.getElementById('toastIcon');
