@@ -7,29 +7,116 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-    .badge-3 { background-color: #dcfce7; color: #166534; border: 1px solid #86efac; }
-    .badge-2 { background-color: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
-    .badge-1 { background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+      background-color: #f1f5f9; 
+    }
+    
+    /* Badge Keterangan */
+    .badge-3 { background-color: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; }
+    .badge-2 { background-color: #eff6ff; color: #1e40af; border: 1px solid #93c5fd; }
+    .badge-1 { background-color: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
+
+    /* Segmented Pill Selector untuk Nilai 1, 2, 3 */
+    .score-pill-group {
+      display: inline-flex;
+      align-items: center;
+      background-color: #f1f5f9;
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      gap: 2px;
+      transition: all 0.2s ease;
+    }
+    .score-pill-group:hover {
+      border-color: #cbd5e1;
+      background-color: #e2e8f0/60;
+    }
+    .score-btn {
+      width: 30px;
+      height: 28px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      user-select: none;
+    }
+    .score-btn:hover {
+      background-color: #ffffff;
+      color: #1e293b;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .score-btn:active {
+      transform: scale(0.93);
+    }
+
+    /* Warna Aktif per Skor */
+    .score-btn.active-1 {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(217, 119, 6, 0.35);
+    }
+    .score-btn.active-2 {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+    }
+    .score-btn.active-3 {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35);
+    }
+
+    /* Tombol Reset Kecil di Samping Pill */
+    .clear-single-btn {
+      width: 20px;
+      height: 28px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #94a3b8;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .clear-single-btn:hover {
+      color: #e11d48;
+      background-color: #ffe4e6;
+    }
   </style>
 </head>
-<body class="text-slate-800 pb-16">
+<body class="text-slate-800 pb-16 antialiased">
 
   <!-- Header -->
-  <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30">
+  <header class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-lg sticky top-0 z-30 border-b border-white/10">
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div>
-        <h1 class="text-lg sm:text-xl font-bold flex items-center gap-2">
-          <i class="fa-solid fa-table-list"></i> Penilaian Mandiri, Kreativitas & Kolaboratif
-        </h1>
-        <p class="text-xs text-indigo-200 mt-0.5">Tersinkronisasi langsung dengan Sheet Data_Siswa</p>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 shadow-inner">
+          <i class="fa-solid fa-award text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">
+            Penilaian Mandiri, Kreativitas & Kolaboratif
+          </h1>
+          <p class="text-xs text-slate-300 mt-0.5 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+            Sinkronisasi Real-Time • Sheet <code class="text-indigo-300 font-semibold">Data_Siswa</code>
+          </p>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
-        <span id="syncStatus" class="text-xs bg-indigo-800 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+
+      <div class="flex items-center gap-2.5">
+        <span id="syncStatus" class="text-xs bg-white/10 border border-white/10 px-3.5 py-1.5 rounded-full flex items-center gap-1.5 font-medium backdrop-blur-xs">
           <i class="fa-solid fa-circle-check text-emerald-400"></i> Terhubung
         </span>
-        <button onclick="fetchData()" class="bg-white/15 hover:bg-white/25 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer">
+        <button onclick="fetchData()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer">
           <i class="fa-solid fa-rotate"></i> Refresh
         </button>
       </div>
@@ -38,40 +125,66 @@
 
   <main class="max-w-7xl mx-auto px-4 mt-6">
     
+    <!-- Legenda Rubrik Singkat -->
+    <div class="bg-white/80 backdrop-blur-xs px-4 py-2.5 rounded-xl border border-slate-200/80 mb-4 flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div class="flex items-center gap-2 font-semibold text-slate-600">
+        <i class="fa-solid fa-circle-info text-indigo-500"></i>
+        <span>Skala Penilaian Cepat:</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 text-slate-600">
+          <span class="w-5 h-5 rounded-md bg-emerald-600 text-white font-bold text-[11px] inline-flex items-center justify-center">3</span>
+          <span>Sangat Bagus</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5 text-slate-600">
+          <span class="w-5 h-5 rounded-md bg-blue-600 text-white font-bold text-[11px] inline-flex items-center justify-center">2</span>
+          <span>Bagus</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5 text-slate-600">
+          <span class="w-5 h-5 rounded-md bg-amber-500 text-white font-bold text-[11px] inline-flex items-center justify-center">1</span>
+          <span>Cukup</span>
+        </span>
+        <span class="text-slate-400 hidden sm:inline">|</span>
+        <span class="text-slate-500 italic text-[11px]">Klik angka yang sama atau ikon <i class="fa-solid fa-xmark text-slate-400"></i> untuk mengosongkan</span>
+      </div>
+    </div>
+
     <!-- Panel Kontrol: Pencarian, Filter Kelas, Tombol Copy & Tombol Hapus -->
-    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-5">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/90 mb-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-end">
         
         <!-- Pencarian -->
         <div class="lg:col-span-4">
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Cari Siswa (Nama / NIS / NISN)</label>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Cari Siswa (Nama / NIS / NISN)</label>
           <div class="relative">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-sm"></i>
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
             <input type="text" id="searchInput" onkeyup="filterData()" placeholder="Ketik nama atau nomor induk..." 
-              class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+              class="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
           </div>
         </div>
 
         <!-- Filter Kelas -->
         <div class="lg:col-span-3">
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Filter Kelas</label>
-          <select id="kelasFilter" onchange="filterData()" 
-            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-            <option value="">Semua Kelas</option>
-          </select>
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Filter Kelas</label>
+          <div class="relative">
+            <select id="kelasFilter" onchange="filterData()" 
+              class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer font-medium text-slate-700">
+              <option value="">Semua Kelas</option>
+            </select>
+          </div>
         </div>
 
         <!-- Tombol Aksi: Copy & Hapus -->
         <div class="lg:col-span-5 flex flex-wrap sm:flex-nowrap gap-2">
           
           <!-- Copy Nama -->
-          <button onclick="copyNames()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
+          <button onclick="copyNames()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
             <i class="fa-regular fa-copy"></i> Copy Nama
           </button>
 
           <!-- Dropdown Copy Nilai -->
           <div class="relative flex-1" id="copyDropdownWrapper">
-            <button onclick="toggleMenu('copyMenu', 'deleteMenu')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
+            <button onclick="toggleMenu('copyMenu', 'deleteMenu')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
               <i class="fa-solid fa-clipboard-check"></i> Copy Nilai <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
             </button>
 
@@ -112,7 +225,7 @@
 
           <!-- Dropdown Hapus / Reset Nilai -->
           <div class="relative flex-1" id="deleteDropdownWrapper">
-            <button onclick="toggleMenu('deleteMenu', 'copyMenu')" class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
+            <button onclick="toggleMenu('deleteMenu', 'copyMenu')" class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
               <i class="fa-solid fa-trash-can"></i> Hapus Nilai <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
             </button>
 
@@ -150,31 +263,31 @@
       <!-- Info Jumlah Data -->
       <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap justify-between items-center text-xs text-slate-500 gap-2">
         <span>Menampilkan <strong id="countShown" class="text-slate-800">0</strong> dari <strong id="countTotal" class="text-slate-800">0</strong> siswa</span>
-        <span class="text-slate-400 italic">*Tombol Copy & Hapus berlaku untuk data siswa yang sedang tampil sesuai filter kelas/pencarian</span>
+        <span class="text-slate-400 italic">*Tombol Copy & Hapus berlaku untuk daftar siswa yang tampil saat ini</span>
       </div>
     </div>
 
     <!-- Tabel Data -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
-              <th class="py-3 px-3 font-semibold w-12 text-center">No</th>
-              <th class="py-3 px-3 font-semibold">NIS / NISN</th>
-              <th class="py-3 px-4 font-semibold">Nama Lengkap</th>
-              <th class="py-3 px-3 font-semibold text-center">Kelas</th>
-              <th class="py-3 px-3 font-semibold text-center w-28">Mandiri</th>
-              <th class="py-3 px-3 font-semibold text-center w-28">Kreativitas</th>
-              <th class="py-3 px-3 font-semibold text-center w-28">Kolaboratif</th>
-              <th class="py-3 px-4 font-semibold w-36">Ket</th>
+            <tr class="bg-slate-50/90 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+              <th class="py-3.5 px-3 w-12 text-center">No</th>
+              <th class="py-3.5 px-3">NIS / NISN</th>
+              <th class="py-3.5 px-4">Nama Lengkap</th>
+              <th class="py-3.5 px-3 text-center">Kelas</th>
+              <th class="py-3.5 px-3 text-center min-w-[140px]">Mandiri</th>
+              <th class="py-3.5 px-3 text-center min-w-[140px]">Kreativitas</th>
+              <th class="py-3.5 px-3 text-center min-w-[140px]">Kolaboratif</th>
+              <th class="py-3.5 px-4 w-36">Keterangan</th>
             </tr>
           </thead>
-          <tbody id="tableBody" class="divide-y divide-slate-200 text-sm">
+          <tbody id="tableBody" class="divide-y divide-slate-100 text-sm">
             <tr>
-              <td colspan="8" class="py-10 text-center text-slate-400">
+              <td colspan="8" class="py-12 text-center text-slate-400">
                 <i class="fa-solid fa-spinner fa-spin text-xl mb-2 text-indigo-600"></i>
-                <p>Memuat data dari Spreadsheet...</p>
+                <p class="text-xs font-medium">Memuat data dari Spreadsheet...</p>
               </td>
             </tr>
           </tbody>
@@ -194,10 +307,10 @@
       </div>
       <p id="confirmText" class="text-sm text-slate-600 leading-relaxed mb-5"></p>
       <div class="flex justify-end gap-2">
-        <button onclick="closeConfirmModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition cursor-pointer">
+        <button onclick="closeConfirmModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
           Batal
         </button>
-        <button id="confirmExecuteBtn" onclick="executeClearScores()" class="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition flex items-center gap-1.5 cursor-pointer">
+        <button id="confirmExecuteBtn" onclick="executeClearScores()" class="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
           <i class="fa-solid fa-trash-can"></i> Ya, Hapus Nilai
         </button>
       </div>
@@ -205,7 +318,7 @@
   </div>
 
   <!-- Toast Notifikasi -->
-  <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-2">
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-2 border border-white/10">
     <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
     <span id="toastMsg">Berhasil disalin!</span>
   </div>
@@ -217,7 +330,6 @@
     let filteredData = [];
     let pendingDeleteMode = null;
 
-    // Tutup semua dropdown jika klik di luar area menu
     document.addEventListener('click', (e) => {
       const copyWrap = document.getElementById('copyDropdownWrapper');
       const delWrap = document.getElementById('deleteDropdownWrapper');
@@ -234,7 +346,6 @@
       document.getElementById(openId).classList.toggle('hidden');
     }
 
-    // Hitung Keterangan otomatis dari rata-rata 3 aspek nilai yang sudah diisi
     function calculateKeterangan(m, kr, ko) {
       const scores = [m, kr, ko].filter(v => v !== "" && v !== null && v !== undefined).map(Number);
       if (scores.length === 0) return { text: "", level: 0 };
@@ -246,10 +357,16 @@
     }
 
     function getBadgeClass(level) {
-      if (level === 3) return "badge-3 font-semibold px-2.5 py-1 rounded-full text-xs inline-block";
-      if (level === 2) return "badge-2 font-semibold px-2.5 py-1 rounded-full text-xs inline-block";
-      if (level === 1) return "badge-1 font-semibold px-2.5 py-1 rounded-full text-xs inline-block";
+      if (level === 3) return "badge-3 font-semibold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5";
+      if (level === 2) return "badge-2 font-semibold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5";
+      if (level === 1) return "badge-1 font-semibold px-3 py-1 rounded-full text-xs inline-flex items-center gap-1.5";
       return "text-slate-400 italic text-xs";
+    }
+
+    function getBadgeHtml(text, level) {
+      if (!text) return 'Belum dinilai';
+      const dotColor = level === 3 ? 'bg-emerald-500' : level === 2 ? 'bg-blue-500' : 'bg-amber-500';
+      return `<span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>${text}`;
     }
 
     window.onload = () => {
@@ -315,22 +432,52 @@
       renderTable();
     }
 
-    function buildSelectHtml(rowNumber, field, currentVal) {
+    // Komponen Segmented Pill Selector (1, 2, 3) yang modern & responsif
+    function buildScoreControlHtml(rowNumber, field, currentVal) {
+      const valStr = String(currentVal || "");
+      const scores = [
+        { val: "1", title: "1 - Cukup" },
+        { val: "2", title: "2 - Bagus" },
+        { val: "3", title: "3 - Sangat Bagus" }
+      ];
+
+      const buttonsHtml = scores.map(s => {
+        const isActive = valStr === s.val;
+        const activeClass = isActive ? `active-${s.val}` : '';
+        return `
+          <button type="button" 
+            title="${s.title}"
+            onclick="toggleScorePill(${rowNumber}, '${field}', '${s.val}')"
+            class="score-btn ${activeClass}">
+            ${s.val}
+          </button>
+        `;
+      }).join('');
+
+      const clearBtn = valStr !== "" 
+        ? `<button type="button" title="Kosongkan nilai" onclick="handleNilaiChange(${rowNumber}, '${field}', '')" class="clear-single-btn"><i class="fa-solid fa-xmark"></i></button>` 
+        : '';
+
       return `
-        <select onchange="handleNilaiChange(${rowNumber}, '${field}', this.value)" 
-          class="w-22 px-2 py-1.5 text-sm font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white cursor-pointer">
-          <option value="" ${currentVal === "" ? "selected" : ""}>-</option>
-          <option value="3" ${currentVal === "3" ? "selected" : ""}>3</option>
-          <option value="2" ${currentVal === "2" ? "selected" : ""}>2</option>
-          <option value="1" ${currentVal === "1" ? "selected" : ""}>1</option>
-        </select>
+        <div id="pill-${rowNumber}-${field}" class="score-pill-group">
+          ${buttonsHtml}
+          ${clearBtn}
+        </div>
       `;
+    }
+
+    // Klik angka yang sama akan otomatis mengosongkan (toggle off), klik angka lain akan memilihnya
+    function toggleScorePill(rowNumber, field, clickedVal) {
+      const target = allData.find(d => d.rowNumber === rowNumber);
+      if (!target) return;
+      const nextVal = String(target[field]) === clickedVal ? "" : clickedVal;
+      handleNilaiChange(rowNumber, field, nextVal);
     }
 
     function renderTable() {
       const tbody = document.getElementById('tableBody');
       if (filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">Data siswa tidak ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="py-10 text-center text-slate-400 text-xs">Data siswa tidak ditemukan.</td></tr>`;
         return;
       }
 
@@ -344,21 +491,21 @@
         else if (ketText === "Cukup") level = 1;
 
         return `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="py-3 px-3 text-center text-slate-500 font-medium">${item.no || (idx + 1)}</td>
+          <tr class="hover:bg-indigo-50/40 transition-colors group">
+            <td class="py-3 px-3 text-center text-slate-400 font-semibold text-xs">${item.no || (idx + 1)}</td>
             <td class="py-3 px-3">
-              <div class="font-medium text-slate-700 text-xs">${item.nis || '-'}</div>
-              <div class="text-[11px] text-slate-400">${item.nisn || '-'}</div>
+              <div class="font-semibold text-slate-700 text-xs">${item.nis || '-'}</div>
+              <div class="text-[11px] text-slate-400 font-mono">${item.nisn || '-'}</div>
             </td>
-            <td class="py-3 px-4 font-semibold text-slate-800">${item.nama}</td>
+            <td class="py-3 px-4 font-semibold text-slate-800 group-hover:text-indigo-950 transition-colors">${item.nama}</td>
             <td class="py-3 px-3 text-center">
-              <span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-1 rounded-md border border-slate-200">${item.kelas}</span>
+              <span class="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-200/80">${item.kelas}</span>
             </td>
-            <td class="py-3 px-3 text-center">${buildSelectHtml(item.rowNumber, 'mandiri', item.mandiri)}</td>
-            <td class="py-3 px-3 text-center">${buildSelectHtml(item.rowNumber, 'kreativitas', item.kreativitas)}</td>
-            <td class="py-3 px-3 text-center">${buildSelectHtml(item.rowNumber, 'kolaboratif', item.kolaboratif)}</td>
+            <td class="py-3 px-3 text-center">${buildScoreControlHtml(item.rowNumber, 'mandiri', item.mandiri)}</td>
+            <td class="py-3 px-3 text-center">${buildScoreControlHtml(item.rowNumber, 'kreativitas', item.kreativitas)}</td>
+            <td class="py-3 px-3 text-center">${buildScoreControlHtml(item.rowNumber, 'kolaboratif', item.kolaboratif)}</td>
             <td class="py-3 px-4">
-              <span id="ket-${item.rowNumber}" class="${getBadgeClass(level)}">${ketText || 'Belum dinilai'}</span>
+              <span id="ket-${item.rowNumber}" class="${getBadgeClass(level)}">${getBadgeHtml(ketText, level)}</span>
             </td>
           </tr>
         `;
@@ -371,6 +518,12 @@
 
       allData[targetIndex][field] = newVal;
 
+      // Update tampilan tombol pill secara instan tanpa render ulang seluruh tabel
+      const pillContainer = document.getElementById(`pill-${rowNumber}-${field}`);
+      if (pillContainer) {
+        pillContainer.outerHTML = buildScoreControlHtml(rowNumber, field, newVal);
+      }
+
       const m = allData[targetIndex].mandiri;
       const kr = allData[targetIndex].kreativitas;
       const ko = allData[targetIndex].kolaboratif;
@@ -380,7 +533,7 @@
 
       const ketEl = document.getElementById(`ket-${rowNumber}`);
       if (ketEl) {
-        ketEl.textContent = calc.text || 'Belum dinilai';
+        ketEl.innerHTML = getBadgeHtml(calc.text, calc.level);
         ketEl.className = getBadgeClass(calc.level);
       }
 
@@ -401,7 +554,7 @@
         const result = await res.json();
         if (result.status === 'success') {
           setSyncStatus('success', 'Tersimpan');
-          showToast(`Tersimpan! Ket: ${calc.text || 'Kosong'}`);
+          showToast(`Tersimpan • Ket: ${calc.text || 'Kosong'}`);
         } else {
           setSyncStatus('error', 'Gagal simpan');
           showToast('Gagal menyimpan ke Spreadsheet', true);
@@ -470,7 +623,6 @@
         });
       });
 
-      // Update tabel di layar secara instan
       filterData();
       setSyncStatus('loading', 'Menghapus nilai...');
 
