@@ -38,12 +38,12 @@
 
   <main class="max-w-7xl mx-auto px-4 mt-6">
     
-    <!-- Panel Kontrol: Pencarian, Filter Kelas & Tombol Copy -->
+    <!-- Panel Kontrol: Pencarian, Filter Kelas, Tombol Copy & Tombol Hapus -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-5">
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
         
         <!-- Pencarian -->
-        <div class="md:col-span-5">
+        <div class="lg:col-span-4">
           <label class="block text-xs font-semibold text-slate-600 mb-1">Cari Siswa (Nama / NIS / NISN)</label>
           <div class="relative">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-sm"></i>
@@ -53,7 +53,7 @@
         </div>
 
         <!-- Filter Kelas -->
-        <div class="md:col-span-3">
+        <div class="lg:col-span-3">
           <label class="block text-xs font-semibold text-slate-600 mb-1">Filter Kelas</label>
           <select id="kelasFilter" onchange="filterData()" 
             class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
@@ -61,15 +61,17 @@
           </select>
         </div>
 
-        <!-- Tombol Copy -->
-        <div class="md:col-span-4 flex flex-wrap sm:flex-nowrap gap-2">
+        <!-- Tombol Aksi: Copy & Hapus -->
+        <div class="lg:col-span-5 flex flex-wrap sm:flex-nowrap gap-2">
+          
+          <!-- Copy Nama -->
           <button onclick="copyNames()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
             <i class="fa-regular fa-copy"></i> Copy Nama
           </button>
 
           <!-- Dropdown Copy Nilai -->
           <div class="relative flex-1" id="copyDropdownWrapper">
-            <button onclick="toggleCopyMenu()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
+            <button onclick="toggleMenu('copyMenu', 'deleteMenu')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
               <i class="fa-solid fa-clipboard-check"></i> Copy Nilai <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
             </button>
 
@@ -107,13 +109,48 @@
               </button>
             </div>
           </div>
+
+          <!-- Dropdown Hapus / Reset Nilai -->
+          <div class="relative flex-1" id="deleteDropdownWrapper">
+            <button onclick="toggleMenu('deleteMenu', 'copyMenu')" class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
+              <i class="fa-solid fa-trash-can"></i> Hapus Nilai <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
+            </button>
+
+            <div id="deleteMenu" class="hidden absolute right-0 mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-40 text-left">
+              <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-rose-500">Reset Sesuai Filter Aktif</div>
+              <button onclick="promptClearScores('all')" class="w-full text-left px-3.5 py-2 text-xs text-rose-700 hover:bg-rose-50 flex items-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-eraser text-rose-600 w-4"></i>
+                <div>
+                  <div class="font-semibold">Hapus Semua Kategori Nilai</div>
+                  <div class="text-[10px] text-rose-400">Kosongkan Mandiri, Kreativitas, Kolaboratif & Ket</div>
+                </div>
+              </button>
+
+              <div class="my-1 border-t border-slate-100"></div>
+              <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Hapus Kategori Tertentu</div>
+
+              <button onclick="promptClearScores('mandiri')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-rose-50 hover:text-rose-700 flex items-center gap-2 cursor-pointer">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <span class="font-medium">Hapus Nilai Mandiri</span>
+              </button>
+              <button onclick="promptClearScores('kreativitas')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-rose-50 hover:text-rose-700 flex items-center gap-2 cursor-pointer">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="font-medium">Hapus Nilai Kreativitas</span>
+              </button>
+              <button onclick="promptClearScores('kolaboratif')" class="w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-rose-50 hover:text-rose-700 flex items-center gap-2 cursor-pointer">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="font-medium">Hapus Nilai Kolaboratif</span>
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 
       <!-- Info Jumlah Data -->
       <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap justify-between items-center text-xs text-slate-500 gap-2">
         <span>Menampilkan <strong id="countShown" class="text-slate-800">0</strong> dari <strong id="countTotal" class="text-slate-800">0</strong> siswa</span>
-        <span class="text-slate-400 italic">*Hasil copy otomatis memisahkan kolom dengan Tab (siap paste ke Excel/Sheets)</span>
+        <span class="text-slate-400 italic">*Tombol Copy & Hapus berlaku untuk data siswa yang sedang tampil sesuai filter kelas/pencarian</span>
       </div>
     </div>
 
@@ -146,6 +183,27 @@
     </div>
   </main>
 
+  <!-- Modal Konfirmasi Hapus Nilai -->
+  <div id="confirmModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center gap-3 text-rose-600 mb-3">
+        <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">Konfirmasi Hapus Nilai</h3>
+      </div>
+      <p id="confirmText" class="text-sm text-slate-600 leading-relaxed mb-5"></p>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeConfirmModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition cursor-pointer">
+          Batal
+        </button>
+        <button id="confirmExecuteBtn" onclick="executeClearScores()" class="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition flex items-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-trash-can"></i> Ya, Hapus Nilai
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notifikasi -->
   <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-2">
     <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
@@ -157,18 +215,23 @@
 
     let allData = [];
     let filteredData = [];
+    let pendingDeleteMode = null;
 
-    // Tutup dropdown jika klik di luar area menu
+    // Tutup semua dropdown jika klik di luar area menu
     document.addEventListener('click', (e) => {
-      const wrapper = document.getElementById('copyDropdownWrapper');
-      const menu = document.getElementById('copyMenu');
-      if (wrapper && !wrapper.contains(e.target)) {
-        menu.classList.add('hidden');
+      const copyWrap = document.getElementById('copyDropdownWrapper');
+      const delWrap = document.getElementById('deleteDropdownWrapper');
+      if (copyWrap && !copyWrap.contains(e.target)) {
+        document.getElementById('copyMenu').classList.add('hidden');
+      }
+      if (delWrap && !delWrap.contains(e.target)) {
+        document.getElementById('deleteMenu').classList.add('hidden');
       }
     });
 
-    function toggleCopyMenu() {
-      document.getElementById('copyMenu').classList.toggle('hidden');
+    function toggleMenu(openId, closeId) {
+      document.getElementById(closeId).classList.add('hidden');
+      document.getElementById(openId).classList.toggle('hidden');
     }
 
     // Hitung Keterangan otomatis dari rata-rata 3 aspek nilai yang sudah diisi
@@ -349,7 +412,92 @@
       }
     }
 
-    // Copy Nama Siswa saja
+    // --- FITUR HAPUS / RESET NILAI ---
+    function promptClearScores(mode) {
+      document.getElementById('deleteMenu').classList.add('hidden');
+      if (filteredData.length === 0) return showToast('Tidak ada data siswa yang tampil untuk dihapus nilainya.', true);
+
+      pendingDeleteMode = mode;
+      const kelasAktif = document.getElementById('kelasFilter').value;
+      const targetScope = kelasAktif ? `Kelas <strong>${kelasAktif}</strong>` : `<strong>Semua Kelas yang Tampil</strong>`;
+      
+      const modeNames = {
+        all: 'Semua Kategori Nilai (Mandiri, Kreativitas, Kolaboratif) & Keterangan',
+        mandiri: 'Nilai Kategori Mandiri',
+        kreativitas: 'Nilai Kategori Kreativitas',
+        kolaboratif: 'Nilai Kategori Kolaboratif'
+      };
+
+      document.getElementById('confirmText').innerHTML = 
+        `Anda akan menghapus <strong>${modeNames[mode]}</strong> untuk <strong>${filteredData.length} siswa</strong> pada ${targetScope}.<br><br>Data di Spreadsheet akan langsung dikosongkan. Lanjutkan?`;
+      
+      document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirmModal').classList.add('hidden');
+      pendingDeleteMode = null;
+    }
+
+    async function executeClearScores() {
+      if (!pendingDeleteMode || filteredData.length === 0) return;
+      const mode = pendingDeleteMode;
+      closeConfirmModal();
+
+      const updatesPayload = [];
+
+      filteredData.forEach(item => {
+        const target = allData.find(d => d.rowNumber === item.rowNumber);
+        if (!target) return;
+
+        if (mode === 'all') {
+          target.mandiri = "";
+          target.kreativitas = "";
+          target.kolaboratif = "";
+        } else {
+          target[mode] = "";
+        }
+
+        const calc = calculateKeterangan(target.mandiri, target.kreativitas, target.kolaboratif);
+        target.ket = calc.text;
+
+        updatesPayload.push({
+          rowNumber: target.rowNumber,
+          mandiri: target.mandiri,
+          kreativitas: target.kreativitas,
+          kolaboratif: target.kolaboratif,
+          ket: target.ket
+        });
+      });
+
+      // Update tabel di layar secara instan
+      filterData();
+      setSyncStatus('loading', 'Menghapus nilai...');
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'bulkUpdateNilai',
+            updates: updatesPayload
+          })
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+          setSyncStatus('success', 'Tersinkronisasi');
+          showToast(`Berhasil menghapus nilai untuk ${updatesPayload.length} siswa!`);
+        } else {
+          setSyncStatus('error', 'Gagal hapus');
+          showToast('Gagal menghapus di Spreadsheet: ' + result.message, true);
+        }
+      } catch (err) {
+        setSyncStatus('error', 'Error');
+        showToast('Terjadi kesalahan jaringan saat menghapus nilai.', true);
+      }
+    }
+
+    // --- FITUR COPY ---
     function copyNames() {
       if (filteredData.length === 0) return showToast('Tidak ada data untuk disalin', true);
       const textToCopy = filteredData.map(item => item.nama).join('\n');
@@ -358,7 +506,6 @@
       });
     }
 
-    // Copy Nilai berdasarkan mode yang dipilih
     function copyScoreMode(mode) {
       document.getElementById('copyMenu').classList.add('hidden');
       if (filteredData.length === 0) return showToast('Tidak ada data untuk disalin', true);
